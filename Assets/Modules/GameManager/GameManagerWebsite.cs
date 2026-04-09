@@ -32,17 +32,6 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     private void StartAuth()
     {
-#if UNITY_EDITOR
-        string lcClientTag = Unity.Multiplayer.PlayMode.CurrentPlayer.Tags[0];
-        string lcClientId = PlayerPrefs.GetString(ClientKey + lcClientTag, Guid.NewGuid().ToString());
-        string lcPassword = PlayerPrefs.GetString(PasswordKey + lcClientTag, string.Empty);
-        if (string.IsNullOrEmpty(lcPassword))
-        {
-            lcPassword = GeneratePasswordHash(lcClientId + lcClientTag);
-            PlayerPrefs.SetString(ClientKey + lcClientTag, lcClientId);
-            PlayerPrefs.SetString(PasswordKey + lcClientTag, lcPassword);
-        }
-#else
         string lcClientId = PlayerPrefs.GetString(ClientKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
         if (string.IsNullOrEmpty(lcPassword))
@@ -51,7 +40,6 @@ public partial class GameManager : MonoBehaviour
             PlayerPrefs.SetString(ClientKey, lcClientId);
             PlayerPrefs.SetString(PasswordKey, lcPassword);
         }
-#endif
     }
 
     /// <summary>
@@ -70,12 +58,7 @@ public partial class GameManager : MonoBehaviour
     /// <returns></returns>
     private static string ClientId()
     {
-#if UNITY_EDITOR
-        string lcClientTag = Unity.Multiplayer.PlayMode.CurrentPlayer.Tags[0];
-        return PlayerPrefs.GetString(ClientKey + lcClientTag);
-#else
         return PlayerPrefs.GetString(ClientKey);
-#endif
     }
 
     /// <summary>
@@ -84,12 +67,7 @@ public partial class GameManager : MonoBehaviour
     /// <returns></returns>
     private static string PasswordHash()
     {
-#if UNITY_EDITOR
-        string lcClientTag = Unity.Multiplayer.PlayMode.CurrentPlayer.Tags[0];
-        return PlayerPrefs.GetString(PasswordKey + lcClientTag);
-#else
         return PlayerPrefs.GetString(PasswordKey);
-#endif
     }
 
     /// <summary>
