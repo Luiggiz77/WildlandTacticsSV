@@ -8,7 +8,7 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Url del sitio.
     /// </summary>
-    private const string gcWebURL = "https://localhost:7049/";
+    private const string gcWebURL = "https://localhost:7037/";
 
     /// <summary>
     /// Url para hacer login.
@@ -22,15 +22,9 @@ public partial class GameManager : MonoBehaviour
     private const string PasswordKey = "Password_Hash";
 
     /// <summary>
-    /// Tokens
-    /// </summary>
-    private static string Token { get; set; } = null;
-    private static long TokenTimeSpan { get; set; } = 0;
-
-    /// <summary>
     /// Start
     /// </summary>
-    private void StartAuth()
+    private void StartWebsite()
     {
         string lcClientId = PlayerPrefs.GetString(ClientKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);

@@ -36,6 +36,12 @@ public partial class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Tokens
+    /// </summary>
+    internal static string Token = null;
+    private static long TokenTimeSpan = 0;
+
+    /// <summary>
     /// Son las texturas 2D instanciadas.
     /// </summary>
     private static Dictionary<string, Texture2D> goTextures2D = new Dictionary<string, Texture2D>();
@@ -48,6 +54,8 @@ public partial class GameManager : MonoBehaviour
         WaitForSeconds loWaitForSeconds = new WaitForSeconds(0.5f);
         using (UnityWebRequest loUnityWebRequest = UnityWebRequest.Get(lcURL))
         {
+            if (!string.IsNullOrWhiteSpace(Token)) loUnityWebRequest.SetRequestHeader("Authorization", "Bearer " + Token);
+
             using (loUnityWebRequest.downloadHandler = new DownloadHandlerBuffer())
             {
                 using (loUnityWebRequest.certificateHandler = new PrivateCertificateHandler())
@@ -74,12 +82,38 @@ public partial class GameManager : MonoBehaviour
     /// <param name="lcText"></param>
     /// <param name="loOnresult"></param>
     /// <returns></returns>
+    public static IEnumerator Post(string lcUrl, UnityAction<bool, string> loOnResult)
+    {
+        using (UnityWebRequest loUnityWebRequest = new UnityWebRequest(lcUrl, "POST"))
+        {
+            if (!string.IsNullOrWhiteSpace(Token)) loUnityWebRequest.SetRequestHeader("Authorization", "Bearer " + Token);
+            using (loUnityWebRequest.downloadHandler = new DownloadHandlerBuffer())
+            {
+                loUnityWebRequest.SetRequestHeader("Content-Type", "text/html; charset=utf-8");
+
+                yield return loUnityWebRequest.SendWebRequest();
+
+                if (loUnityWebRequest.result == UnityWebRequest.Result.Success) loOnResult?.Invoke(true, loUnityWebRequest.downloadHandler.text);
+                else loOnResult?.Invoke(false, loUnityWebRequest.error);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Se usa para enviar cosas al servidor.
+    /// </summary>
+    /// <param name="lcUrl"></param>
+    /// <param name="lcText"></param>
+    /// <param name="loOnresult"></param>
+    /// <returns></returns>
     public static IEnumerator Post(string lcUrl, string lcText, UnityAction<bool, string> loOnResult, CoroutineResult<string> loPostResult = null)
     {
         if (string.IsNullOrEmpty(lcText)) yield break;
 
         using (UnityWebRequest loUnityWebRequest = new UnityWebRequest(lcUrl, "POST"))
         {
+            if (!string.IsNullOrWhiteSpace(Token)) loUnityWebRequest.SetRequestHeader("Authorization", "Bearer " + Token);
+
             byte[] loRawBody = Encoding.UTF8.GetBytes(lcText);
             using (loUnityWebRequest.uploadHandler = new UploadHandlerRaw(loRawBody))
             {
@@ -118,18 +152,29 @@ public partial class GameManager : MonoBehaviour
         //<< Agregamos los elementos del from.
         foreach (DTO2<string, string> loItem in loParams)
         {
-#if UNITY_EDITOR
-            if(string.IsNullOrWhiteSpace(loItem.Item1) || loItem.Item2 == null)
+            if (loItem == null)
             {
-                Debug.LogError($"Hay un null en el Form del post, Url:{lcURL}, I1:{loItem.Item1}, I2:{loItem.Item2}");
-            }
+#if UNITY_EDITOR
+                Debug.LogWarning($"Hay un null en el Form del post, uno de los items!");
 #endif
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(loItem.Item1) || loItem.Item2 == null)
+            {
+#if UNITY_EDITOR
+                Debug.LogWarning($"Hay un null en el Form del post, Url:{lcURL}, I1:{loItem.Item1}, I2:{loItem.Item2}");
+#endif
+                continue;
+            }
 
             loForm.AddField(loItem.Item1, loItem.Item2);
         }
 
         using (UnityWebRequest loUnityWebRequest = UnityWebRequest.Post(lcURL, loForm))
         {
+            if (!string.IsNullOrWhiteSpace(Token)) loUnityWebRequest.SetRequestHeader("Authorization", "Bearer " + Token);
+
             using (loUnityWebRequest.downloadHandler = new DownloadHandlerBuffer())
             {
                 using (loUnityWebRequest.certificateHandler = new PrivateCertificateHandler())

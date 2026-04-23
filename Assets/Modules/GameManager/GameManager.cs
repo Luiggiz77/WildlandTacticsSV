@@ -21,6 +21,7 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     private void Start()
     {
+        StartWebsite();
     }
 
     /// <summary>
