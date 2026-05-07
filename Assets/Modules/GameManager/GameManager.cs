@@ -14,6 +14,9 @@ public partial class GameManager : MonoBehaviour
     {
         Application.targetFrameRate = 30;
         Instance = this;
+
+        AwakeAudio();
+        AwakeTexture2D();
     }
 
     /// <summary>

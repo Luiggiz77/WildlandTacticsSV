@@ -23,3 +23,26 @@ public class TestScript : MonoBehaviour
         Debug.Log($"ResultProfile: {lbResult} String: {lcResult}");
     }
 }
+
+/*
+
+Sigo trabajando para mostrar el tablero con las unidades.
+
+
+1. Crear una cuenta. (User)
+2. Crear unidades base para la cuenta.
+3. Configurar tablero de distribución.
+ 
+
+
+La cuenta está enlazada a una facción? El la elije.
+
+Las configuraciones basicas se guardan en servidor? Se guarda en local.
+
+A la hora de la batalla quien decide que terreno se ve? Cada quien por separado? Arriba jugador el local quien tiene el terreno los dos ven el mismo terreno.
+
+El terreno se guarda en servidor como configuración.
+
+Todo se queda en c#
+
+*/
