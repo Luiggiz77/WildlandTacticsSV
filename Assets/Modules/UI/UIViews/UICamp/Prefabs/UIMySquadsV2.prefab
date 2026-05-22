@@ -814,6 +814,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1041,6 +1042,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2074,6 +2076,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3058,6 +3061,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3252,6 +3256,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -4183,7 +4188,9 @@ MonoBehaviour:
   - {fileID: 414709386021579198}
   - {fileID: 414709386719905957}
   - {fileID: 414709384857822731}
-  pageScrollAudioReference: event:/SFX/SFX UI/pageinfoscroll
+  onPageScroll:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &414709386100505714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4506,6 +4513,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -5391,6 +5399,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6291,8 +6300,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7f413af27bdc73c45bfbdcfab4aaf352, type: 2}
-  m_sharedMaterial: {fileID: -3328189779326227400, guid: 7f413af27bdc73c45bfbdcfab4aaf352, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -6327,6 +6336,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -7414,9 +7424,6 @@ MonoBehaviour:
   statPrefab: {fileID: 3172504435556638510, guid: b7cedfd727fd524409cdd1e03fda4e9d, type: 3}
   statsParent: {fileID: 414709386863541650}
   gridLayoutStats: {fileID: 414709386863541649}
-  audioEmitter: {fileID: 0}
-  popUpOpen: 
-  popUpClose: 
   iconHealth: {fileID: 21300000, guid: 8d89296ad142de74aa151fb248bb77d7, type: 3}
   iconPhysicalDamage: {fileID: 21300000, guid: b3056853d762e854cbc92b8c705f6c0c, type: 3}
   iconMagicalDamage: {fileID: 21300000, guid: c0fe8a27f94dfb04f800729163d4cf9c, type: 3}
@@ -7714,102 +7721,6 @@ MonoBehaviour:
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: 1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
---- !u!1 &4967322135856816442
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4967322135856816443}
-  - component: {fileID: 4967322135856816446}
-  - component: {fileID: 4967322135856816445}
-  - component: {fileID: 4967322135856816444}
-  m_Layer: 5
-  m_Name: ref
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &4967322135856816443
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967322135856816442}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4967322136557112544}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1920, y: 1080}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &4967322135856816446
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967322135856816442}
-  m_CullTransparentMesh: 1
---- !u!114 &4967322135856816445
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967322135856816442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 638aa8ab0e839154192484254d73e92f, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!114 &4967322135856816444
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967322135856816442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IgnoreLayout: 1
-  m_MinWidth: -1
-  m_MinHeight: -1
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
 --- !u!1 &4967322135866346226
@@ -8652,7 +8563,6 @@ GameObject:
   - component: {fileID: 4967322136163745848}
   - component: {fileID: 4967322136163745799}
   - component: {fileID: 4967322136163745798}
-  - component: {fileID: 4746816973202987930}
   m_Layer: 5
   m_Name: btnBack
   m_TagString: Untagged
@@ -8785,49 +8695,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 4746816973202987930}
-        m_TargetAssemblyTypeName: FMODUnity.StudioEventEmitter, FMODUnity
-        m_MethodName: Play
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &4746816973202987930
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967322136163745796}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a6610d2e704f1648819acc8d7460285, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CollisionTag: 
-  EventReference:
-    Guid:
-      Data1: 1500545835
-      Data2: 1127411015
-      Data3: -789350783
-      Data4: 370691051
-    Path: event:/SFX/SFX UI/buttongoback
-  Event: 
-  PlayEvent: 0
-  StopEvent: 0
-  AllowFadeout: 1
-  TriggerOnce: 0
-  Preload: 0
-  AllowNonRigidbodyDoppler: 0
-  Params: []
-  OverrideAttenuation: 0
-  OverrideMinDistance: 1
-  OverrideMaxDistance: 20
 --- !u!1 &4967322136294941966
 GameObject:
   m_ObjectHideFlags: 0
@@ -9170,8 +9037,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Mis Escuadrones
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7f413af27bdc73c45bfbdcfab4aaf352, type: 2}
-  m_sharedMaterial: {fileID: -3328189779326227400, guid: 7f413af27bdc73c45bfbdcfab4aaf352, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9195,7 +9062,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 80
+  m_fontSize: 39.35
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -9206,6 +9073,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -9515,7 +9383,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4967322135856816443}
   - {fileID: 4967322135467766961}
   - {fileID: 4967322135729076417}
   m_Father: {fileID: 6910722608192070011}
@@ -10762,8 +10629,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Name
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7f413af27bdc73c45bfbdcfab4aaf352, type: 2}
-  m_sharedMaterial: {fileID: -3328189779326227400, guid: 7f413af27bdc73c45bfbdcfab4aaf352, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -10787,7 +10654,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
+  m_fontSize: 25.1
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -10798,6 +10665,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -11682,7 +11550,9 @@ MonoBehaviour:
   scrollrect: {fileID: 4967322137443001412}
   animationSpeed: 7
   markers: []
-  pageScrollAudioReference: event:/SFX/SFX UI/pageinfoscroll
+  onPageScroll:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &4967322137443001415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12107,6 +11977,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -12210,8 +12081,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panel: {fileID: 4967322136557112559}
-  settings: {fileID: 11400000, guid: af12e2954979c9c45a26dcb8ceae9b83, type: 2}
-  distributionBoardSettings: {fileID: 11400000, guid: ad2ce6bd8650884488f36cfd7c5cbd6f, type: 2}
+  settings: {fileID: 11400000, guid: 17686f5ea7ed98341b2874c94435bb16, type: 2}
+  distributionBoardSettings: {fileID: 11400000, guid: fc276ba63cae15a4ca4e3b47d2c6e66e, type: 2}
   prefabUIUnitSelector: {fileID: 920348656979725853, guid: 5b5b00c038ae7464082d93d342e21d37, type: 3}
   grid: {fileID: 4967322137229583265}
   gridRectTransform: {fileID: 4967322137229583264}

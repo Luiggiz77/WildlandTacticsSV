@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "GamePlay/UI/Screen/UICampSettings")]
+[CreateAssetMenu(menuName = "Modules/UI/UIViews/UICampSettings")]
 public class UICampSettings : ScriptableObject
 {
     [Tooltip("Indica la cantidad de columnas que se deben mostrar en el grid.")]

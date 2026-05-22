@@ -17,6 +17,8 @@ public partial class GameManager : MonoBehaviour
 
         AwakeAudio();
         AwakeTexture2D();
+        AwakeWebsite();
+        AwakeLanguage();
     }
 
     /// <summary>
@@ -24,7 +26,7 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        StartWebsite();
+        StartLanguage();
     }
 
     /// <summary>

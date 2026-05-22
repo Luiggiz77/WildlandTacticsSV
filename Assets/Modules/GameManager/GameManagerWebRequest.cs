@@ -39,7 +39,7 @@ public partial class GameManager : MonoBehaviour
     /// Tokens
     /// </summary>
     internal static string Token = null;
-    private static long TokenTimeSpan = 0;
+    private static DateTime TokenExpiration = DateTime.UtcNow;
 
     /// <summary>
     /// Son las texturas 2D instanciadas.

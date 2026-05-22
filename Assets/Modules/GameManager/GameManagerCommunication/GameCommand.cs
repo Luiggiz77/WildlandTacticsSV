@@ -553,13 +553,20 @@ public enum GameCommand : int
 
     #region MISC
     /// <summary>
+    /// Se llama para pedir el lenguaje al sitio web.
+    /// param[0] = UnityAction<bool, string> loCallbackJson - Es el callback que regresa el json dado por el sitio web.
+    /// param[1] = DTO2<string, string>[] loPostParams - Son los parametros que se envian al sitio web para determinar si se debe mandar actualización del lenguaje o no.
+    /// </summary>
+    RequestLanguage,
+
+    /// <summary>
     /// Se llama para avisar que ha cambiado el lenguaje.
     /// </summary>
     LanguageChanged,
 
     /// <summary>
     /// Se llama para reproducir un sonido.
-    /// param[0] = bool lbOpponent - Indica si la unidad es del usuario o del oponente.
+    /// param[0] = SoundType loSoundType - Indica el tipo de sonido a reproducir.
     /// </summary>
     PlaySound,
     #endregion

@@ -262,7 +262,6 @@ public class UICamp : UIView
     /// <param name="loUnitIds"></param>
     private void OnGetDistributionBoards(bool lbOpponent, IEnumerable<DistributionBoard> loDistributionBoards)
     {
-
         //<< Configuramos los tableros de distribución.
         UIDistributionBoard loUIDistributionBoard;
         UIDistributionBoardCell loPrefabUIDistributionBoardCell;
@@ -429,6 +428,7 @@ public class UICamp : UIView
     public void OnClickReturn()
     {
         panel.SetActive(false);
+        GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
         GameManager.Send(GameCommand.ShowUIMainMenu);
     }
 

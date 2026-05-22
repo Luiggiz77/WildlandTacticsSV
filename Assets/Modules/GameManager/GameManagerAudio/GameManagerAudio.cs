@@ -3,8 +3,9 @@ using UnityEngine;
 
 public partial class GameManager : MonoBehaviour
 {
-    [Tooltip("Para mapear los sonidos a sus llaves 'string' de FMOD")]
-    public SoundKey[] soundKeys;
+    [Header("AUDIO")]
+    [Tooltip("Sonidos existentes")]
+    public Sounds sounds;
     //public StudioEventEmitter audioEmitter;
 
     //EventInstance loInstance = RuntimeManager.CreateInstance(EventReference.Find(popUpOpen));
@@ -22,7 +23,7 @@ public partial class GameManager : MonoBehaviour
     void AwakeAudio()
     {
         //<< Mapeamos los sonidos.
-        foreach (SoundKey loItem in soundKeys) goSounds.Add(loItem.sound, loItem.key);
+        foreach (SoundKey loItem in sounds.soundKeys) goSounds.Add(loItem.sound, loItem.key);
 
         //<< Nos conectamos a los comandos.
         AddListener(OnGameCommandAudio);
@@ -38,7 +39,17 @@ public partial class GameManager : MonoBehaviour
         switch (loCommand)
         {
             case GameCommand.PlaySound:
+                {
+                    SoundType loSoundType = (SoundType)loParams[0];
+                    if(!goSounds.ContainsKey(loSoundType))
+                    {
+                        Debug.Log($"GameManager: SoundType inexistente - {loSoundType}");
+                        return;
+                    }
+                    string lcKey = goSounds[loSoundType];
 
+                    //<< Reproducimos en FMOD usando la llave.
+                }
                 break;
             default: break;
         }

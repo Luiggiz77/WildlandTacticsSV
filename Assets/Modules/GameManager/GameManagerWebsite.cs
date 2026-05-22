@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Events;
 
 public partial class GameManager : MonoBehaviour
 {
@@ -16,23 +17,63 @@ public partial class GameManager : MonoBehaviour
     internal const string gcUrlLogin = gcWebURL + "login";
 
     /// <summary>
-    /// Llaves de los player prefs.
+    /// Url para pedir el lenguaje.
     /// </summary>
-    private const string ClientKey = "Client_Id";
-    private const string PasswordKey = "Password_Hash";
+    internal const string gcUrlLanguage = gcWebURL + "language";
 
     /// <summary>
-    /// Start
+    /// Url para pedir los ids de nuestras unidades.
     /// </summary>
-    private void StartWebsite()
+    internal const string gcUrlUnitsIds = gcWebURL + "unitsids";
+
+    /// <summary>
+    /// Llaves de los player prefs.
+    /// </summary>
+    private const string ClientIdKey = "ClientId";
+    private const string PasswordKey = "Password";
+
+    /// <summary>
+    /// Se llama en el Awake del GameManager
+    /// </summary>
+    void AwakeWebsite()
     {
-        string lcClientId = PlayerPrefs.GetString(ClientKey, Guid.NewGuid().ToString());
+        string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
         if (string.IsNullOrEmpty(lcPassword))
         {
             lcPassword = GeneratePasswordHash(lcClientId);
-            PlayerPrefs.SetString(ClientKey, lcClientId);
+            PlayerPrefs.SetString(ClientIdKey, lcClientId);
             PlayerPrefs.SetString(PasswordKey, lcPassword);
+        }
+
+        //<< Nos conectamos a los comandos.
+        AddListener(OnGameCommandWebsite);
+    }
+
+    /// <summary>
+    /// Para recepcion de comandos del juego.
+    /// </summary>
+    /// <param name="loCommand"></param>
+    /// <param name="loParams"></param>
+    private void OnGameCommandWebsite(GameCommand loCommand, params object[] loParams)
+    {
+        switch (loCommand)
+        {
+            case GameCommand.RequestLanguage:
+                {
+                    UnityAction<bool, string> loCallback = (UnityAction<bool, string>)loParams[0];
+                    DTO2<string, string>[] loPostParams = (DTO2<string, string>[])loParams[1];
+                    GameManager.Run(GetJson(gcUrlLanguage, loCallback, loPostParams), nameof(GameCommand.RequestLanguage));
+                }
+                break;
+
+            case GameCommand.GetUnitIds:
+                {
+                    UnityAction<int[]> loCallback = (UnityAction<int[]>)loParams[0];
+                    GameManager.Run(GetObject<int[]>(gcUrlUnitsIds, loCallback), nameof(GameCommand.GetUnitIds));
+                }
+                break;
+            default: break;
         }
     }
 
@@ -43,7 +84,7 @@ public partial class GameManager : MonoBehaviour
     private static bool IsTokenValid()
     {
         if (string.IsNullOrWhiteSpace(Token)) return false;
-        return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < TokenTimeSpan;
+        return DateTime.UtcNow < TokenExpiration;
     }
 
     /// <summary>
@@ -52,14 +93,14 @@ public partial class GameManager : MonoBehaviour
     /// <returns></returns>
     private static string ClientId()
     {
-        return PlayerPrefs.GetString(ClientKey);
+        return PlayerPrefs.GetString(ClientIdKey);
     }
 
     /// <summary>
-    /// Nos da el passwordhash.
+    /// Nos da el password.
     /// </summary>
     /// <returns></returns>
-    private static string PasswordHash()
+    private static string Password()
     {
         return PlayerPrefs.GetString(PasswordKey);
     }
@@ -92,9 +133,9 @@ public partial class GameManager : MonoBehaviour
         }
 
         //<< Nos dan el token del usuario para comunicarnos con el backend.
-        DTO2<string, long> loResponse = JsonUtility.FromJson<DTO2<string, long>>(lcResult);
+        DTO2<string, double> loResponse = JsonUtility.FromJson<DTO2<string, double>>(lcResult);
         Token = loResponse.Item1;
-        TokenTimeSpan = loResponse.Item2;
+        TokenExpiration = DateTime.UtcNow.AddSeconds(loResponse.Item2);
     }
 
     /// <summary>
@@ -122,8 +163,44 @@ public partial class GameManager : MonoBehaviour
         while (!IsTokenValid())
         {
             yield return WaitInternetReachability();
-            yield return Post(gcUrlLogin, OnWebLogin, null, new DTO2<string, string>(nameof(ClientId), ClientId()), new DTO2<string, string>(nameof(PasswordHash), PasswordHash()));
+            yield return Post(gcUrlLogin, OnWebLogin, null, new DTO2<string, string>(nameof(ClientId), ClientId()), new DTO2<string, string>(nameof(Password), Password()));
             if (!IsTokenValid()) yield return loWaitForSeconds;
+        }
+        yield break;
+    }
+
+    /// <summary>
+    /// Se llama para pedir un json al sitio web.
+    /// </summary>
+    /// <param name="lcUrl"></param>
+    /// <param name="loCallback"></param>
+    /// <returns></returns>
+    private static IEnumerator GetJson(string lcUrl, UnityAction<bool, string> loCallback, params DTO2<string, string>[] loParams)
+    {
+        yield return Login();
+        yield return Post(lcUrl, loCallback, null, loParams);
+        yield break;
+    }
+
+    /// <summary>
+    /// Nos da el objeto con base en el string descargado.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="lcUrl"></param>
+    /// <param name="loCallback"></param>
+    /// <param name="loParams"></param>
+    /// <returns></returns>
+    private static IEnumerator GetObject<T>(string lcUrl, UnityAction<T> loCallback, params DTO2<string, string>[] loParams) where T : class
+    {
+        yield return Login();
+        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        yield return Post(lcUrl, null, loCoroutineResult, loParams);
+        if (!loCoroutineResult.Completed) loCallback.Invoke(null);
+        else
+        {
+            string lcJson = loCoroutineResult.Object;
+            T loObject = JsonUtility.FromJson<T>(lcJson);
+            loCallback.Invoke(loObject);
         }
         yield break;
     }
