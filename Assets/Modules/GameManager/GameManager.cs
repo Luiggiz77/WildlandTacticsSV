@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public partial class GameManager : MonoBehaviour
@@ -6,6 +7,16 @@ public partial class GameManager : MonoBehaviour
     /// Instancia de GameManager por si algo la necesita.
     /// </summary>
     private static GameManager Instance = null;
+
+    /// <summary>
+    /// Url del sitio.
+    /// </summary>
+    private const string WebsiteURL = "https://localhost:7037/";
+
+    /// <summary>
+    /// Uri del sitio web.
+    /// </summary>
+    private static readonly Uri UriWebsite = new Uri(WebsiteURL);
 
     /// <summary>
     /// Awake
@@ -27,6 +38,7 @@ public partial class GameManager : MonoBehaviour
     private void Start()
     {
         StartLanguage();
+        StartAdressables();
     }
 
     /// <summary>

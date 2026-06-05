@@ -141,7 +141,7 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Se llama para obtener el token, ya sea creando una cuenta o como login.
     /// </summary>
-    public static IEnumerator Post(string lcURL, UnityAction<bool, string> loOnResult, CoroutineResult<string> loPostResult, params DTO2<string, string>[] loParams)
+    public static IEnumerator Post(Uri loUri, UnityAction<bool, string> loOnResult, CoroutineResult<string> loPostResult, params DTO2<string, string>[] loParams)
     {
         //<< Si no tenemos token local sabemos que debemos crear cuenta.
         WaitForSeconds loWaitForSeconds = new WaitForSeconds(1);
@@ -163,7 +163,7 @@ public partial class GameManager : MonoBehaviour
             if (string.IsNullOrWhiteSpace(loItem.Item1) || loItem.Item2 == null)
             {
 #if UNITY_EDITOR
-                Debug.LogWarning($"Hay un null en el Form del post, Url:{lcURL}, I1:{loItem.Item1}, I2:{loItem.Item2}");
+                Debug.LogWarning($"Hay un null en el Form del post, Url:{loUri.OriginalString}, I1:{loItem.Item1}, I2:{loItem.Item2}");
 #endif
                 continue;
             }
@@ -171,7 +171,7 @@ public partial class GameManager : MonoBehaviour
             loForm.AddField(loItem.Item1, loItem.Item2);
         }
 
-        using (UnityWebRequest loUnityWebRequest = UnityWebRequest.Post(lcURL, loForm))
+        using (UnityWebRequest loUnityWebRequest = UnityWebRequest.Post(loUri, loForm))
         {
             if (!string.IsNullOrWhiteSpace(Token)) loUnityWebRequest.SetRequestHeader("Authorization", "Bearer " + Token);
 

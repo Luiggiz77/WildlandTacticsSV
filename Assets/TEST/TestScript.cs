@@ -4,7 +4,7 @@ public class TestScript : MonoBehaviour
 {
     public void OnClick()
     {
-        GameManager.Run(GameManager.Post("https://localhost:7037/Login", OnResult, null, new DTO2<string, string>("Name", "Robot"), new DTO2<string, string>("Password", "robotrobot")), "Post");
+        GameManager.Run(GameManager.Post(new System.Uri("https://localhost:7037/Login"), OnResult, null, new DTO2<string, string>("Name", "Robot"), new DTO2<string, string>("Password", "robotrobot")), "Post");
     }
 
     private void OnResult(bool lbResult, string lcResult)

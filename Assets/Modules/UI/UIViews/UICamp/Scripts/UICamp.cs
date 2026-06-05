@@ -83,12 +83,6 @@ public class UICamp : UIView
     private UIDistributionBoardCell[] goUIDistributionBoardCells;
 
     /// <summary>
-    /// Bandera que nos indica que deseamos modificar los tableros de distribucion en modo oponente.
-    /// FINDME Debe removerse despues, solo se usa para pruebas.
-    /// </summary>
-    private bool gbOpponent = false;
-
-    /// <summary>
     /// Diccionario de tipo de unidades, la llave es un indice y el valor es el id de UnitBattleProperties.
     /// </summary>
     private Dictionary<int, List<UnitRole>> goUnitTypes = new Dictionary<int, List<UnitRole>>();
@@ -127,6 +121,8 @@ public class UICamp : UIView
         goUnitTypes.Add(5, new List<UnitRole>() { UnitRole.Rogue, UnitRole.Thief, UnitRole.Assasin, UnitRole.Jester });
 
         UpdateText();
+
+        UpdateLayout();//<< FINMDE Borrar despues
     }
 
     /// <summary>
@@ -203,7 +199,7 @@ public class UICamp : UIView
     /// Callback de cuando recibimos los ids de las unidades.
     /// </summary>
     /// <param name="loUnitIds"></param>
-    private void OnGetUnitIds(bool lbOpponent, IEnumerable<int> loUnitIds)
+    private void OnGetUnitIds(int[] loUnitIds)
     {
         int lnHashCode = prefabUIUnitSelector.GetHashCode();
 
@@ -440,7 +436,7 @@ public class UICamp : UIView
         //<< Sabemos que son todas las unidades.
         if (lnIndex <= 0)
         {
-            GameManager.Send(GameCommand.GetUnitIds, gbOpponent, new UnityAction<bool, IEnumerable<int>>(OnGetUnitIds));
+            GameManager.Send(GameCommand.GetUnitIds, new UnityAction<int[]>(OnGetUnitIds));
             return;
         }
 
@@ -448,16 +444,7 @@ public class UICamp : UIView
         List<UnitRole> loUnitRoles = goUnitTypes[lnIndex];
 
         //<< Pedimos nuestras unidades filtradas por tipo.
-        GameManager.Send(GameCommand.GetUnitIdsFilteredByRoles, gbOpponent, new UnityAction<bool, IEnumerable<int>>(OnGetUnitIds), loUnitRoles);
-    }
-
-    /// <summary>
-    /// Funcion para indicar que debemos intercambiar las unidades enemigas con las unidades del usuario, se usa para configurar los tableros enemigos.
-    /// </summary>
-    public void OnSwitchUnitSelectors()
-    {
-        //<< Indicamos que modificaremos tableros ya dea de usuario u oponente.
-        OnUpdateDistributionBoardsAndUnits(!gbOpponent);
+        GameManager.Send(GameCommand.GetUnitIdsFilteredByRoles, new UnityAction<int[]>(OnGetUnitIds), loUnitRoles);
     }
 
     /// <summary>
@@ -466,8 +453,6 @@ public class UICamp : UIView
     /// <param name="lbOpponent"></param>
     private void OnUpdateDistributionBoardsAndUnits(bool lbOponent)
     {
-        gbOpponent = lbOponent;
-
         //<< Desactivamos los dos tipos de cells.
         GameManager.DeactivateSpawns(prefabUIDistributionBoardCellUser.GetHashCode());
         GameManager.DeactivateSpawns(prefabUIDistributionBoardCellOpponent.GetHashCode());
@@ -479,10 +464,10 @@ public class UICamp : UIView
         //OnDropdownUnitTypeChanged(TMProTranslationDropdown.component.value);
 
         //<< Pedimos nuestras unidades.
-        GameManager.Send(GameCommand.GetUnitIds, gbOpponent, new UnityAction<bool, IEnumerable<int>>(OnGetUnitIds));
+        GameManager.Send(GameCommand.GetUnitIds, new UnityAction<int[]>(OnGetUnitIds));
 
         //<< Pedimos nuestros tableros de distribución.
-        GameManager.Send(GameCommand.GetDistributionBoards, gbOpponent, new UnityAction<bool, IEnumerable<DistributionBoard>>(OnGetDistributionBoards));
+        GameManager.Send(GameCommand.GetDistributionBoards, new UnityAction<bool, IEnumerable<DistributionBoard>>(OnGetDistributionBoards));
     }
 
     /// <summary>

@@ -7,24 +7,19 @@ using UnityEngine.Events;
 public partial class GameManager : MonoBehaviour
 {
     /// <summary>
-    /// Url del sitio.
-    /// </summary>
-    private const string gcWebURL = "https://localhost:7037/";
-
-    /// <summary>
     /// Url para hacer login.
     /// </summary>
-    internal const string gcUrlLogin = gcWebURL + "login";
+    internal static readonly Uri UriLogin = new Uri(UriWebsite, "login");
 
     /// <summary>
     /// Url para pedir el lenguaje.
     /// </summary>
-    internal const string gcUrlLanguage = gcWebURL + "language";
+    internal static readonly Uri UriLanguage = new Uri(UriWebsite, "language");
 
     /// <summary>
     /// Url para pedir los ids de nuestras unidades.
     /// </summary>
-    internal const string gcUrlUnitsIds = gcWebURL + "unitsids";
+    internal static readonly Uri UriUnitsIds = new Uri(UriWebsite, "unitsids");
 
     /// <summary>
     /// Llaves de los player prefs.
@@ -63,14 +58,14 @@ public partial class GameManager : MonoBehaviour
                 {
                     UnityAction<bool, string> loCallback = (UnityAction<bool, string>)loParams[0];
                     DTO2<string, string>[] loPostParams = (DTO2<string, string>[])loParams[1];
-                    GameManager.Run(GetJson(gcUrlLanguage, loCallback, loPostParams), nameof(GameCommand.RequestLanguage));
+                    GameManager.Run(GetJson(UriLanguage, loCallback, loPostParams), nameof(GameCommand.RequestLanguage));
                 }
                 break;
 
             case GameCommand.GetUnitIds:
                 {
                     UnityAction<int[]> loCallback = (UnityAction<int[]>)loParams[0];
-                    GameManager.Run(GetObject<int[]>(gcUrlUnitsIds, loCallback), nameof(GameCommand.GetUnitIds));
+                    GameManager.Run(GetObjectDTO<int[]>(UriUnitsIds, loCallback), nameof(GameCommand.GetUnitIds));
                 }
                 break;
             default: break;
@@ -163,7 +158,7 @@ public partial class GameManager : MonoBehaviour
         while (!IsTokenValid())
         {
             yield return WaitInternetReachability();
-            yield return Post(gcUrlLogin, OnWebLogin, null, new DTO2<string, string>(nameof(ClientId), ClientId()), new DTO2<string, string>(nameof(Password), Password()));
+            yield return Post(UriLogin, OnWebLogin, null, new DTO2<string, string>(nameof(ClientId), ClientId()), new DTO2<string, string>(nameof(Password), Password()));
             if (!IsTokenValid()) yield return loWaitForSeconds;
         }
         yield break;
@@ -175,10 +170,10 @@ public partial class GameManager : MonoBehaviour
     /// <param name="lcUrl"></param>
     /// <param name="loCallback"></param>
     /// <returns></returns>
-    private static IEnumerator GetJson(string lcUrl, UnityAction<bool, string> loCallback, params DTO2<string, string>[] loParams)
+    private static IEnumerator GetJson(Uri loUri, UnityAction<bool, string> loCallback, params DTO2<string, string>[] loParams)
     {
         yield return Login();
-        yield return Post(lcUrl, loCallback, null, loParams);
+        yield return Post(loUri, loCallback, null, loParams);
         yield break;
     }
 
@@ -186,21 +181,44 @@ public partial class GameManager : MonoBehaviour
     /// Nos da el objeto con base en el string descargado.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="lcUrl"></param>
+    /// <param name="loUri"></param>
     /// <param name="loCallback"></param>
     /// <param name="loParams"></param>
     /// <returns></returns>
-    private static IEnumerator GetObject<T>(string lcUrl, UnityAction<T> loCallback, params DTO2<string, string>[] loParams) where T : class
+    private static IEnumerator GetObject<T>(Uri loUri, UnityAction<T> loCallback, params DTO2<string, string>[] loParams) where T : class
     {
         yield return Login();
         CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
-        yield return Post(lcUrl, null, loCoroutineResult, loParams);
+        yield return Post(loUri, null, loCoroutineResult, loParams);
         if (!loCoroutineResult.Completed) loCallback.Invoke(null);
         else
         {
             string lcJson = loCoroutineResult.Object;
             T loObject = JsonUtility.FromJson<T>(lcJson);
             loCallback.Invoke(loObject);
+        }
+        yield break;
+    }
+
+    /// <summary>
+    /// Nos da el objeto pero atraves de un DTO.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="loUri"></param>
+    /// <param name="loCallback"></param>
+    /// <param name="loParams"></param>
+    /// <returns></returns>
+    private static IEnumerator GetObjectDTO<T>(Uri loUri, UnityAction<T> loCallback, params DTO2<string, string>[] loParams) where T : class
+    {
+        yield return Login();
+        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        yield return Post(loUri, null, loCoroutineResult, loParams);
+        if (!loCoroutineResult.Completed) loCallback.Invoke(null);
+        else
+        {
+            string lcJson = loCoroutineResult.Object;
+            DTO1<T> loObject = JsonUtility.FromJson<DTO1<T>>(lcJson);
+            loCallback.Invoke(loObject.Item1);
         }
         yield break;
     }

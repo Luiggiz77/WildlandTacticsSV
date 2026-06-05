@@ -369,7 +369,33 @@ public enum GameCommand : int
     UpdatePurchasables,
     #endregion
 
+    /// <summary>
+    /// Se llama para indicarle a la pantalla de descarga que debe poner cierto porcentaje de descarga.
+    /// param[0] = float lnPercent - Es el porcentaje de descarga.
+    /// </summary>
+    SetUIDownloadingPercent,
+
+    /// <summary>
+    /// Se llama para indicarle a la pantalla de descarga que debe poner cierto texto.
+    /// param[0] = string lcText - Es el texto que deseamos mostrar en la pantalla de descarga.
+    /// </summary>
+    SetUIDownloadingText,
+
     #region Show UI
+    /// <summary>
+    /// Mostrar la pantalla de descarga.
+    /// </summary>
+    ShowUIDownloading,
+
+    /// <summary>
+    /// Mostrar la pantalla de carga para realizar una corrutina de otra interfaz u objeto que lo requiera.
+    /// param[0] = string lcText - Es el texto a mostrar en el modal.
+    /// param[1] = string lcTextButtonOk - Es el texto a mostrar en el boton de Ok.
+    /// param[2] = string lcTextButtonCancel - Es el texto a mostrar en el boton de Cancel. Nota: Si es null o empty no se muestra el botón de cancelar.
+    /// param[3] = UnityAction<bool> loCallback - Evento para indicar si le dieron click a Ok (true) o Cancel (false).
+    /// </summary>
+    ShowUIModal,
+
     /// <summary>
     /// Mostrar la pantalla de carga para realizar una corrutina de otra interfaz u objeto que lo requiera.
     /// param[0] = IEnumerator loCoroutine - Es la corrutina que debe ejecutarse en la pantalla de carga.
@@ -543,6 +569,11 @@ public enum GameCommand : int
     #endregion
 
     #region Hide UI
+
+    /// <summary>
+    /// Se llama para ocultar la pantalla de carga.
+    /// </summary>
+    HideUIDownloading,
 
     /// <summary>
     /// Se llama para ocultar el bondo de la interfaz.
