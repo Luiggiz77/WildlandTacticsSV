@@ -3,23 +3,39 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Networking;
 
 public partial class GameManager : MonoBehaviour
 {
     /// <summary>
+    /// Url del sitio.
+    /// </summary>
+    private const string WebsiteURL = "https://localhost:7175/";
+
+    /// <summary>
+    /// Uri del sitio web.
+    /// </summary>
+    private static Uri UriWebsite = null;
+
+    /// <summary>
     /// Url para hacer login.
     /// </summary>
-    internal static readonly Uri UriLogin = new Uri(UriWebsite, "login");
+    private static Uri UriLogin = null;
 
     /// <summary>
     /// Url para pedir el lenguaje.
     /// </summary>
-    internal static readonly Uri UriLanguage = new Uri(UriWebsite, "language");
+    private static Uri UriLanguage = null;
 
     /// <summary>
     /// Url para pedir los ids de nuestras unidades.
     /// </summary>
-    internal static readonly Uri UriUnitsIds = new Uri(UriWebsite, "unitsids");
+    private static Uri UriUnitsIds = null;
+
+    /// <summary>
+    /// Url para descargar el archivo "version.txt" para adressables.
+    /// </summary>
+    private static Uri UriVersionFile = null;
 
     /// <summary>
     /// Llaves de los player prefs.
@@ -32,6 +48,12 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     void AwakeWebsite()
     {
+        UriWebsite = new Uri(WebsiteURL);
+        UriLogin = new Uri(UriWebsite, "login");
+        UriLanguage = new Uri(UriWebsite, "language");
+        UriUnitsIds = new Uri(UriWebsite, "unitsids");
+        UriVersionFile = new Uri(UriWebsite, $"{GetPlatformPath()}/version.txt?rand={UnityEngine.Random.Range(0, int.MaxValue)}");
+
         string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
         if (string.IsNullOrEmpty(lcPassword))
@@ -221,5 +243,44 @@ public partial class GameManager : MonoBehaviour
             loCallback.Invoke(loObject.Item1);
         }
         yield break;
+    }
+
+
+    /// <summary>
+    /// Se llama para descargar un archivo de texto.
+    /// </summary>
+    /// <param name="loUri"></param>
+    /// <param name="loResult"></param>
+    /// <returns></returns>
+    private static IEnumerator DownloadTextFile(Uri loUri, CoroutineResult<string> loResult)
+    {
+        //<< Creamos la petición GET a la URL
+        using (UnityWebRequest loUnityWebRequest = UnityWebRequest.Get(loUri))
+        {
+            //<< Enviamos la petición y esperamos a que responda
+            yield return loUnityWebRequest.SendWebRequest();
+
+            //<< Verificamos si hubo algún error
+            if (loUnityWebRequest.result == UnityWebRequest.Result.ConnectionError || loUnityWebRequest.result == UnityWebRequest.Result.ProtocolError) loResult.OnFailed(loUnityWebRequest.error);
+            else loResult.OnCompleted(loUnityWebRequest.downloadHandler.text);
+        }
+    }
+
+    /// <summary>
+    /// Nos da parte del path con base en la plataforma.
+    /// </summary>
+    /// <returns></returns>
+    private static string GetPlatformPath()
+    {
+        switch (Application.platform)
+        {
+            case RuntimePlatform.WindowsEditor:
+            case RuntimePlatform.WindowsPlayer: return "StandaloneWindows64";
+            case RuntimePlatform.Android: return "Android";
+            case RuntimePlatform.IPhonePlayer: return "iOS";
+            case RuntimePlatform.OSXPlayer: return "StandaloneOSX";
+            case RuntimePlatform.LinuxPlayer: return "StandaloneLinux64";
+            default: return "UnknownPlatform";
+        }
     }
 }

@@ -56,4 +56,8 @@ public enum GameTextUsage : int
     /// int PurchasableId
     /// </summary>
     PurchasableDescription = 12,
+    /// <summary>
+    /// Son mensajes de error.
+    /// </summary>
+    Error = 13,
 }

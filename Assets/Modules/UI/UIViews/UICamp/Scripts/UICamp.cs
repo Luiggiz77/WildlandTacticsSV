@@ -121,8 +121,6 @@ public class UICamp : UIView
         goUnitTypes.Add(5, new List<UnitRole>() { UnitRole.Rogue, UnitRole.Thief, UnitRole.Assasin, UnitRole.Jester });
 
         UpdateText();
-
-        UpdateLayout();//<< FINMDE Borrar despues
     }
 
     /// <summary>

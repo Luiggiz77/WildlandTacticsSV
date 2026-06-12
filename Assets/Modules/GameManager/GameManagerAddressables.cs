@@ -1,20 +1,29 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.Initialization;
 using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.Events;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 public partial class GameManager : MonoBehaviour
 {
-    // Puedes usar la etiqueta "Preload" en Unity para marcar todo lo que se debe bajar al inicio
-    public string PreDownloadLabel = "Preload";
-
     /// <summary>
     /// Se llama ane le start del GameManager
     /// </summary>
     void StartAdressables()
     {
         StartCoroutine(DownloadAllRoutine());
+    }
+
+    /// <summary>
+    /// Nos indica si debemos o no reiniciar la descarga de adressables.
+    /// </summary>
+    /// <param name="lbRetry"></param>
+    private void RestartAdressables(bool lbRetry)
+    {
+        if (lbRetry) StartAdressables();
+        else Application.Quit();
     }
 
     /// <summary>
@@ -26,23 +35,49 @@ public partial class GameManager : MonoBehaviour
         //<< Avisamos a la pantalla de carga que debe mostrarse.
         GameManager.Send(GameCommand.ShowUIDownloading);
 
+        //<< Debemos descargar primero el archivo de la versión para saber el apendice de los archivos ".bin" y ".hash".
+        CoroutineResult<string> loDownloadVersionFileResult = new CoroutineResult<string>();
+        yield return DownloadTextFile(UriVersionFile, loDownloadVersionFileResult);
+
+        if (!loDownloadVersionFileResult.Completed)
+        {
+            GameManager.Send(GameCommand.HideUIDownloading);
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartAdressables));
+            Debug.Log($"Error al descargar el archivo de version. Error: {loDownloadVersionFileResult.Object}");
+            yield break;
+        }
+
+        //<< Generamos la direccion del catalogo de addressables.
+        string lcCatalogURL = $"{WebsiteURL}{GetPlatformPath()}/catalog_{loDownloadVersionFileResult.Object}.bin";
+
+        // 3. ¡LA MAGIA! Creamos un objeto de inicialización manual
+        // Esto le dice a Unity: "No busques en StreamingAssets, usa esta URL como base"
+        AddressablesRuntimeProperties.SetPropertyValue("RemoteCatalogProvider", lcCatalogURL);
+
         //<< Inicializamos Addressables
-        AsyncOperationHandle loInitHandle = Addressables.InitializeAsync();
+        AsyncOperationHandle loInitHandle = Addressables.InitializeAsync(false);
 
         //<< Esperamos se inicialicen los adressables.
         yield return loInitHandle;
 
-        // 2. LE DECIMOS DÓNDE ESTÁ EL CATÁLOGO REMOTO
-        // (Apunta directamente al archivo .json que subió el proyecto productor a Blazor)
-        string lcCatalogURL = "https://localhost:7037/catalog.bin";
+        //<< Revisamos que Addressables se inicializó correctamente.
+        if (loInitHandle.Status == AsyncOperationStatus.Failed)
+        {
+            GameManager.Send(GameCommand.HideUIDownloading);
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartAdressables));
+            Addressables.Release(loInitHandle);
+            yield break;
+        }
 
-        AsyncOperationHandle<IResourceLocator> loCatalogHandle = Addressables.LoadContentCatalogAsync(lcCatalogURL, true);
+        Addressables.Release(loInitHandle);
+
+        AsyncOperationHandle<IResourceLocator> loCatalogHandle = Addressables.LoadContentCatalogAsync(lcCatalogURL, false);
         yield return loCatalogHandle;
 
         if (loCatalogHandle.Status == AsyncOperationStatus.Succeeded)
         {
-            Debug.Log("¡Catálogo remoto cargado con éxito! Ahora el cliente ya conoce la etiqueta 'default'.");
-
+            Addressables.Release(loCatalogHandle);
+            
             //<< Comprobamos el tamaño de la descarga.
             AsyncOperationHandle<long> loDownloadSizeHandle = Addressables.GetDownloadSizeAsync("default");
             yield return loDownloadSizeHandle;
@@ -55,10 +90,8 @@ public partial class GameManager : MonoBehaviour
                 //<< Si el tamaño es mayor a 0 hay cosas por descargar.
                 if (lnDownloadSize > 0)
                 {
-                    Debug.Log($"Hay contenido nuevo para descargar: {lnDownloadSize / (1024f * 1024f):F2} MB");
-
                     //<< Iniciamos la descarga.
-                    AsyncOperationHandle loDownloadDependenciesHandle = Addressables.DownloadDependenciesAsync(PreDownloadLabel, true);
+                    AsyncOperationHandle loDownloadDependenciesHandle = Addressables.DownloadDependenciesAsync("default", false);
 
                     //<< Actualizamos el porcentaje en la UIDownloading.
                     while (!loDownloadDependenciesHandle.IsDone)
@@ -67,31 +100,30 @@ public partial class GameManager : MonoBehaviour
                         yield return null;
                     }
 
-                    if (loDownloadDependenciesHandle.Status == AsyncOperationStatus.Succeeded)
-                    {
-                        Debug.Log("¡Descarga completada con éxito!");
-                    }
-                    else
-                    {
-                        Debug.LogError("Error al descargar los Addressables.");
-                    }
-
                     Addressables.Release(loDownloadDependenciesHandle);
-                }
-                else
-                {
-                    Debug.Log("Todo está al día. No hay nada que descargar.");
+
+                    if (loDownloadDependenciesHandle.Status != AsyncOperationStatus.Succeeded)
+                    {
+                        GameManager.Send(GameCommand.HideUIDownloading);
+                        GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartAdressables));
+                        yield break;
+                    }
                 }
             }
             //<< Si ocurre un error mandamos modal de reintentar.
             else
             {
-                Debug.LogError("Error al verificar el tamaño de la descarga.");
+                GameManager.Send(GameCommand.HideUIDownloading);
+                GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartAdressables));
+                yield break;
             }
         }
         else
         {
-            Debug.LogError("No se pudo descargar el catálogo del servidor Blazor. ¿Está encendido el servidor o bien configurados los MIME types?");
+            Addressables.Release(loCatalogHandle);
+            GameManager.Send(GameCommand.HideUIDownloading);
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartAdressables));
+            yield break;
         }
 
         //<< Avisamos a la pantalla de carga que debe ocultarse.

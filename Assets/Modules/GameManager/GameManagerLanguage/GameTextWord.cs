@@ -96,4 +96,8 @@ public enum GameTextWord : int
     /// Nombre de la moneda.
     /// </summary>
     CurrencyName = 23,
+    /// <summary>
+    /// Reintentar
+    /// </summary>
+    Retry = 24,
 }
