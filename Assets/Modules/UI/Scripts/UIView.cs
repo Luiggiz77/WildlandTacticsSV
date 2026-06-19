@@ -11,6 +11,7 @@ public abstract class UIView : MonoBehaviour
     protected virtual void Awake()
     {
         GameManager.AddListener(OnGameCommand);
+        panel.gameObject.SetActive(false);
     }
 
     /// <summary>

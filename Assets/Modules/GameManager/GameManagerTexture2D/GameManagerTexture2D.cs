@@ -7,7 +7,7 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Lista de texturas del juego. Nota: Deben ser descargadas previamente del servidor.
     /// </summary>
-    private List<GameTexture2D> goGameTextures2D = new List<GameTexture2D>();
+    private Dictionary<GameTexture2DUsage, List<GameTexture2D>> goGameTextures2D = new Dictionary<GameTexture2DUsage, List<GameTexture2D>>();
 
     /// <summary>
     /// Se llama en el Awake del GameManager
@@ -42,12 +42,14 @@ public partial class GameManager : MonoBehaviour
         GameTexture2D loGameTexture2D = null;
 
         //<< Buscamos la textura que contenga las dos llaves.
-        foreach (GameTexture2D loItem in goGameTextures2D)
+        if (goGameTextures2D.ContainsKey(loGameTexture2DUsage))
         {
-            if (loItem.Usage != loGameTexture2DUsage) continue;
-            if (loItem.Key != lnKey) continue;
-            loGameTexture2D = loItem;
-            break;
+            foreach (GameTexture2D loItem in goGameTextures2D[loGameTexture2DUsage])
+            {
+                if (loItem.Key != lnKey) continue;
+                loGameTexture2D = loItem;
+                break;
+            }
         }
 
         //<< Revisamos si encontramos el elemento o no.
@@ -107,12 +109,14 @@ public partial class GameManager : MonoBehaviour
         GameTexture2D loGameTexture2D = null;
 
         //<< Buscamos la textura que contenga las dos llaves.
-        foreach (GameTexture2D loItem in goGameTextures2D)
+        if (goGameTextures2D.ContainsKey(loGameTexture2DUsage))
         {
-            if (loItem.Usage != loGameTexture2DUsage) continue;
-            if (loItem.Key != lnKey) continue;
-            loGameTexture2D = loItem;
-            break;
+            foreach (GameTexture2D loItem in goGameTextures2D[loGameTexture2DUsage])
+            {
+                if (loItem.Key != lnKey) continue;
+                loGameTexture2D = loItem;
+                break;
+            }
         }
 
         //<< Revisamos si encontramos el elemento o no.

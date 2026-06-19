@@ -44,5 +44,6 @@ public partial class GameManager : MonoBehaviour
     private void OnDestroy()
     {
         OnDestroyCommunication();
+        OnDestroyAddressables();
     }
 }

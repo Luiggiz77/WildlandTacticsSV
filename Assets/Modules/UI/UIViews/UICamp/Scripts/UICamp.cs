@@ -33,14 +33,8 @@ public class UICamp : UIView
     [Tooltip("Parefab para crear los tableros de distribución del usuario.")]
     public UIDistributionBoard prefabUIDistributionBoardUser;
 
-    [Tooltip("Parefab para crear los tableros de distribución del oponente.")]
-    public UIDistributionBoard prefabUIDistributionBoardOpponent;
-
     [Tooltip("Parefab para crear los espacios en el tableros de distribución del usuario.")]
     public UIDistributionBoardCell prefabUIDistributionBoardCellUser;
-
-    [Tooltip("Parefab para crear los espacios en el tableros de distribución del oponente.")]
-    public UIDistributionBoardCell prefabUIDistributionBoardCellOpponent;
 
     [Tooltip("Texto del nombre del escuadrón")]
     public TMP_Text distributionBoardName;
@@ -259,16 +253,8 @@ public class UICamp : UIView
         //<< Configuramos los tableros de distribución.
         UIDistributionBoard loUIDistributionBoard;
         UIDistributionBoardCell loPrefabUIDistributionBoardCell;
-        if (lbOpponent)
-        {
-            loUIDistributionBoard = prefabUIDistributionBoardOpponent;
-            loPrefabUIDistributionBoardCell = prefabUIDistributionBoardCellOpponent;
-        }
-        else
-        {
-            loUIDistributionBoard = prefabUIDistributionBoardUser;
-            loPrefabUIDistributionBoardCell = prefabUIDistributionBoardCellUser;
-        }
+        loUIDistributionBoard = prefabUIDistributionBoardUser;
+        loPrefabUIDistributionBoardCell = prefabUIDistributionBoardCellUser;
 
         SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoards.transform, panelScrollRectDistributionBoards, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnBoardWidht, gnBoardLenght, distributionBoardSettings, loUIDistributionBoard, loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out _, out _, lbOpponent);
 
@@ -453,10 +439,7 @@ public class UICamp : UIView
     {
         //<< Desactivamos los dos tipos de cells.
         GameManager.DeactivateSpawns(prefabUIDistributionBoardCellUser.GetHashCode());
-        GameManager.DeactivateSpawns(prefabUIDistributionBoardCellOpponent.GetHashCode());
-
         GameManager.DeactivateSpawns(prefabUIDistributionBoardUser.GetHashCode());
-        GameManager.DeactivateSpawns(prefabUIDistributionBoardOpponent.GetHashCode());
 
         //<< Pedimos nuestras unidades.
         //OnDropdownUnitTypeChanged(TMProTranslationDropdown.component.value);
