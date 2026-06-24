@@ -4,4 +4,6 @@ public enum SoundType : int
     PopUpOpen = 1,
     PopUpClose = 2,
     ButtonBack = 3,
+    Pick = 4,
+    Drop = 5,
 }

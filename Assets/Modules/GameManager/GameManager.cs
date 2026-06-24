@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public partial class GameManager : MonoBehaviour
@@ -29,6 +28,7 @@ public partial class GameManager : MonoBehaviour
     {
         StartLanguage();
         StartAdressables();
+        StartWebsite();
     }
 
     /// <summary>

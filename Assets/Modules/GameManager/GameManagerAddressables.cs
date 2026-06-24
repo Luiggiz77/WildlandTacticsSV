@@ -21,14 +21,9 @@ public partial class GameManager : MonoBehaviour
     private AsyncOperationHandle<IList<Texture2D>> goGameTextures2DHandle;
 
     /// <summary>
-    /// Tamaño de descarga de los Addressables.
-    /// </summary>
-    private long gnAddressablesDownloadSize = 0;
-
-    /// <summary>
     /// Se llama ane le start del GameManager
     /// </summary>
-    void StartAdressables()
+    private void StartAdressables()
     {
         StartCoroutine(InitializeAddressables());
     }
@@ -50,16 +45,6 @@ public partial class GameManager : MonoBehaviour
     private void RestartDownloadCatalog(bool lbRetry)
     {
         if (lbRetry) StartCoroutine(DownloadCatalog());
-        else Application.Quit();
-    }
-
-    /// <summary>
-    /// Nos indica si debemos o no reiniciar la obtención del tamaño de descarga de los Addressables.
-    /// </summary>
-    /// <param name="lbRetry"></param>
-    private void RestartGetDownloadSize(bool lbRetry)
-    {
-        if (lbRetry) StartCoroutine(GetDownloadSize());
         else Application.Quit();
     }
 
@@ -87,7 +72,7 @@ public partial class GameManager : MonoBehaviour
     /// Es para inicializar los Addressables.
     /// </summary>
     /// <returns></returns>
-    IEnumerator InitializeAddressables()
+    private IEnumerator InitializeAddressables()
     {
         //<< Avisamos a la pantalla de descarga que debe mostrarse.
         GameManager.Send(GameCommand.ShowUIDownloading);
@@ -119,7 +104,7 @@ public partial class GameManager : MonoBehaviour
     /// Se llama para descargar el catalogo.
     /// </summary>
     /// <returns></returns>
-    IEnumerator DownloadCatalog()
+    private IEnumerator DownloadCatalog()
     {
         //<< Avisamos a la pantalla de carga que debe mostrarse.
         GameManager.Send(GameCommand.ShowUIDownloading);
@@ -155,56 +140,16 @@ public partial class GameManager : MonoBehaviour
             yield break;
         }
 
-        //<< Ya que descargamos el catalogo obtenemos el tamaño de la descarga.
-        yield return GetDownloadSize();
-        yield break;
-    }
-
-    /// <summary>
-    /// Obtenemos el tamaño de descarga de todo lo descargable.
-    /// </summary>
-    /// <returns></returns>
-    IEnumerator GetDownloadSize()
-    {
-        //<< Avisamos a la pantalla de carga que debe mostrarse.
-        GameManager.Send(GameCommand.ShowUIDownloading);
-
-        //<< Obtenemos el tamaño de descarga.
-        AsyncOperationHandle<long> loDownloadSizeHandle = Addressables.GetDownloadSizeAsync("default");
-        yield return loDownloadSizeHandle;
-
-        //<< Revisamos si se logró obtener el tamaño de descarga.
-        if (loDownloadSizeHandle.Status == AsyncOperationStatus.Failed)
-        {
-            Addressables.Release(loDownloadSizeHandle);
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartGetDownloadSize));
-            yield break;
-        }
-
-        //<< Obtenemos el tamaño de descarga.
-        gnAddressablesDownloadSize = loDownloadSizeHandle.Result;
-
-        //<< Liberamos el tamaño porque ya tenemos el tamaño.
-        Addressables.Release(loDownloadSizeHandle);
-
-        //<< Si no hay tamaño significa que hay un error.
-        if (gnAddressablesDownloadSize <= 0)
-        {
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartGetDownloadSize));
-            yield break;
-        }
-
         //<< Intentamos la descarga de los elementos.
         yield return DownloadAddressables();
+        yield break;
     }
 
     /// <summary>
     /// Corrutina de descarga de todos los Addressables.
     /// </summary>
     /// <returns></returns>
-    IEnumerator DownloadAddressables()
+    private IEnumerator DownloadAddressables()
     {
         //<< Avisamos a la pantalla de carga que debe mostrarse.
         GameManager.Send(GameCommand.ShowUIDownloading);
@@ -238,10 +183,11 @@ public partial class GameManager : MonoBehaviour
     /// Carga de Textures2D.
     /// </summary>
     /// <returns></returns>
-    public IEnumerator LoadGameTextures2D()
+    private IEnumerator LoadGameTextures2D()
     {
         //<< Obtenemos las locaciones de las texturas.
-        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(nameof(GameTexture2D));
+        string[] loKeys = new string[] { nameof(GameTexture2D) };
+        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Intersection, typeof(Texture2D));
         yield return loLocationsHandle;
 
         if(loLocationsHandle.Status == AsyncOperationStatus.Failed)
@@ -272,6 +218,7 @@ public partial class GameManager : MonoBehaviour
 
         //<< Las locaciones y Textures2D estan "emparejadas".
         string[] loSplitString;
+        string lcColor;
         int lnUsage, lnKey;
         GameTexture2DUsage loGameTexture2DUsage;
         Color loColor;
@@ -282,7 +229,11 @@ public partial class GameManager : MonoBehaviour
             if (loSplitString.Length < 3) continue;
             if (!int.TryParse(loSplitString[0], out lnUsage)) continue;
             if (!int.TryParse(loSplitString[1], out lnKey)) continue;
-            if (!ColorUtility.TryParseHtmlString(loSplitString[2], out loColor)) continue;
+
+            lcColor = loSplitString[2];
+            if (!lcColor.StartsWith("#")) lcColor = "#" + lcColor;
+            if (!ColorUtility.TryParseHtmlString(lcColor, out loColor)) loColor = Color.white;
+
             loGameTexture2DUsage = (GameTexture2DUsage)lnUsage;
 
             //<< Revisamos si ya tenemos la llave "principal".

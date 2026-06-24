@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,9 +30,14 @@ public partial class GameManager : MonoBehaviour
     private static Uri UriLanguage = null;
 
     /// <summary>
-    /// Url para pedir los ids de nuestras unidades.
+    /// Url para pedir las propiedades de nuestras unidades.
     /// </summary>
-    private static Uri UriUnitsIds = null;
+    private static Uri UriUnitsProperties = null;
+
+    /// <summary>
+    /// Url para pedir las propiedades de batalla de nuestras unidades.
+    /// </summary>
+    private static Uri UriUnitsBattleProperties = null;
 
     /// <summary>
     /// Url para descargar el archivo "version.txt" para adressables.
@@ -44,6 +51,16 @@ public partial class GameManager : MonoBehaviour
     private const string PasswordKey = "Password";
 
     /// <summary>
+    /// Propiedades de batalla de todas las unidades.
+    /// </summary>
+    private Dictionary<int, UnitProperties> goUnitsProperties = new Dictionary<int, UnitProperties>();
+
+    /// <summary>
+    /// Propiedades de batalla de todas las unidades.
+    /// </summary>
+    private Dictionary<int, UnitBattleProperties> goUnitsBattleProperties = new Dictionary<int, UnitBattleProperties>();
+
+    /// <summary>
     /// Se llama en el Awake del GameManager
     /// </summary>
     void AwakeWebsite()
@@ -51,7 +68,8 @@ public partial class GameManager : MonoBehaviour
         UriWebsite = new Uri(WebsiteURL);
         UriLogin = new Uri(UriWebsite, "login");
         UriLanguage = new Uri(UriWebsite, "language");
-        UriUnitsIds = new Uri(UriWebsite, "unitsids");
+        UriUnitsProperties = new Uri(UriWebsite, "UnitsProperties");
+        UriUnitsBattleProperties = new Uri(UriWebsite, "UnitsBattleProperties");
         UriVersionFile = new Uri(UriWebsite, $"{GetPlatformPath()}/version.txt?rand={UnityEngine.Random.Range(0, int.MaxValue)}");
 
         string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
@@ -65,6 +83,36 @@ public partial class GameManager : MonoBehaviour
 
         //<< Nos conectamos a los comandos.
         AddListener(OnGameCommandWebsite);
+    }
+
+    /// <summary>
+    /// Se llama en el Start del gameManager.
+    /// </summary>
+    private void StartWebsite()
+    {
+        //<< Pedimos los UnitBattleProperties.
+        GameManager.Run(GetObjectDTO<UnitBattleProperties[]>(UriUnitsBattleProperties, OnGetUnitsBattleProperties), nameof(UriUnitsProperties));
+
+        //<< Pedimos los UnitProperties.
+        GameManager.Run(GetObjectDTO<UnitProperties[]>(UriUnitsProperties, OnGetUnitsProperties), nameof(UriUnitsBattleProperties));
+    }
+
+    /// <summary>
+    /// Callback de cuando nos dan las propiedades de las unidades.
+    /// </summary>
+    /// <param name="loUnitProperties"></param>
+    private void OnGetUnitsProperties(UnitProperties[] loUnitsProperties)
+    {
+        foreach (UnitProperties loUnitProperties in loUnitsProperties) goUnitsProperties.Add(loUnitProperties.Id, loUnitProperties);
+    }
+
+    /// <summary>
+    /// Callback de cuando nos dan las propiedades de batalla de las unidades.
+    /// </summary>
+    /// <param name="loUnitsBattleProperties"></param>
+    private void OnGetUnitsBattleProperties(UnitBattleProperties[] loUnitsBattleProperties)
+    {
+        foreach (UnitBattleProperties loUnitBattleProperties in loUnitsBattleProperties) goUnitsBattleProperties.Add(loUnitBattleProperties.Id, loUnitBattleProperties);
     }
 
     /// <summary>
@@ -87,7 +135,17 @@ public partial class GameManager : MonoBehaviour
             case GameCommand.GetUnitIds:
                 {
                     UnityAction<int[]> loCallback = (UnityAction<int[]>)loParams[0];
-                    GameManager.Run(GetObjectDTO<int[]>(UriUnitsIds, loCallback), nameof(GameCommand.GetUnitIds));
+                    loCallback.Invoke(goUnitsProperties.Keys.ToArray());
+                }
+                break;
+
+            case GameCommand.GetUnitProperties:
+                {
+                    int lnUnitPropertiesId = (int)loParams[0];
+                    UnityAction<UnitBattleProperties, UnitProperties> loCallback = (UnityAction<UnitBattleProperties, UnitProperties>)loParams[1];
+                    UnitProperties loUnitProperties = goUnitsProperties[lnUnitPropertiesId];
+                    UnitBattleProperties loUnitBattleProperties = goUnitsBattleProperties[loUnitProperties.UnitBattlePropertiesId];
+                    loCallback.Invoke(loUnitBattleProperties, loUnitProperties);
                 }
                 break;
             default: break;

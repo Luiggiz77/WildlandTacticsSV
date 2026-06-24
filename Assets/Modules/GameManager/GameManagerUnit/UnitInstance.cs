@@ -119,7 +119,6 @@ public class UnitInstance : UnitElement
                 if (gameObject.layer != GameManager.Layer.Unit) return;//<< Si el layer no es el layer correcto no debemos seleccionarnos.
                 if (UnitProperties == null) return;
                 bool lbOpponent = (bool)loParams[1];
-                if (lbOpponent != UnitProperties.Opponent) return;
                 int lnUnitId = (int)loParams[0];
                 Color lnOutlineColor = (Color)loParams[2];
                 SetSelect(lnUnitId == UnitProperties.Id, lnOutlineColor);

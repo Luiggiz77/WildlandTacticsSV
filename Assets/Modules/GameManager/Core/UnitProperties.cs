@@ -1,3 +1,6 @@
+using System;
+
+[Serializable]
 public class UnitProperties
 {
     /// <summary>
@@ -11,17 +14,7 @@ public class UnitProperties
     public int UnitBattlePropertiesId;
 
     /// <summary>
-    /// Llave del usuario.
-    /// </summary>
-    public int UserId;
-
-    /// <summary>
     /// Nombre de la unidad.
     /// </summary>
     public string Name;
-
-    /// <summary>
-    /// Bandera que indica si es oponente.
-    /// </summary>
-    public bool Opponent;
 }

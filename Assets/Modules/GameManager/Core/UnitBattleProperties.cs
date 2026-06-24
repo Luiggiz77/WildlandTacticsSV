@@ -1,4 +1,7 @@
-﻿public class UnitBattleProperties
+﻿using System;
+
+[Serializable]
+public class UnitBattleProperties
 {
     /// <summary>
     /// Id de las propiedades..

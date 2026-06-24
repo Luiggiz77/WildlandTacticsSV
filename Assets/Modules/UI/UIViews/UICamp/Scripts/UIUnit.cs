@@ -291,9 +291,7 @@ public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHa
 
         boxCollider2DIcon.enabled = true;
 
-        //EventInstance loInstance = RuntimeManager.CreateInstance(EventReference.Find(pickUpUnitAudio));
-        //loInstance.start();
-        //loInstance.release();
+        GameManager.Send(GameCommand.PlaySound, SoundType.Pick);
     }
 
     /// <summary>
@@ -326,9 +324,7 @@ public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHa
             return;
         }
 
-        //EventInstance loInstance = RuntimeManager.CreateInstance(EventReference.Find(dropUnitAudio));
-        //loInstance.start();
-        //loInstance.release();
+        GameManager.Send(GameCommand.PlaySound, SoundType.Drop);
 
         Vector3 loUnitIconPosition = unitContainer.position;
 
@@ -338,17 +334,12 @@ public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHa
 
         unitContainer.localScale = Vector3.one;
 
-
         //<< Desactivamos collider del icono.
         boxCollider2DIcon.enabled = false;
 
         //<< Desactivamos el override del canvas y seteamos a 0 nuevamente
         cellCanvas.overrideSorting = false;
         cellCanvas.sortingOrder = 0;
-
-        //<< Se tiene que revisar esto ya que las mascara solo es para las graficos, es decir los colliders2D aun siguen en los scrollrects.
-        string lcEndsWith = "_0";
-        if (goUnitProperties.Opponent) lcEndsWith = "_1";
 
         //<< Revisamos cual de los colliders contiene realmente la posicion.
         string lcObjectName = null;
@@ -357,13 +348,12 @@ public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHa
         {
             loCollider2D = goColliders2DResult[i];
             if (loCollider2D == null) continue;
-            if (!loCollider2D.name.EndsWith(lcEndsWith)) continue;
             if (!loCollider2D.OverlapPoint(loUnitIconPosition)) continue;
             lcObjectName = loCollider2D.name;
             break;
         }
 
-        //<< Si no se encontr� ningun nombre solo regresamos.
+        //<< Si no se encontró ningun nombre solo regresamos.
         if (lcObjectName == null)
         {
             if (gnDistributionBoardId != 0) GameManager.Send(GameCommand.RemoveUnitFromDistributionBoard, gnUnitPropertiesId, gnDistributionBoardId);
