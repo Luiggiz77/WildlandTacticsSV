@@ -20,6 +20,11 @@ public partial class GameManager : MonoBehaviour
     private static Uri UriWebsite = null;
 
     /// <summary>
+    /// Url para descargar el archivo "version.txt" para adressables.
+    /// </summary>
+    private static Uri UriVersionFile = null;
+
+    /// <summary>
     /// Url para hacer login.
     /// </summary>
     private static Uri UriLogin = null;
@@ -40,9 +45,19 @@ public partial class GameManager : MonoBehaviour
     private static Uri UriUnitsBattleProperties = null;
 
     /// <summary>
-    /// Url para descargar el archivo "version.txt" para adressables.
+    /// Url para obtenes las constantes del tablero.
     /// </summary>
-    private static Uri UriVersionFile = null;
+    private static Uri UriBoardConstants = null;
+
+    /// <summary>
+    /// Url para obtenes los tableros de distribución.
+    /// </summary>
+    private static Uri UriDistributionBoards = null;
+
+    /// <summary>
+    /// Url para obtenes las coordenadas de las unidades en los tableros de distribución.
+    /// </summary>
+    private static Uri UriDistributionBoardsUnitCoordinates = null;
 
     /// <summary>
     /// Llaves de los player prefs.
@@ -61,6 +76,16 @@ public partial class GameManager : MonoBehaviour
     private Dictionary<int, UnitBattleProperties> goUnitsBattleProperties = new Dictionary<int, UnitBattleProperties>();
 
     /// <summary>
+    /// Nuestras constantes de tablero.
+    /// </summary>
+    private BoardConstants goBoardConstants = new BoardConstants() { DistributionBoardLenght = 3, Widht = 6, MaxUnits = 5, };
+
+    /// <summary>
+    /// Nuestros tableros de distribución.
+    /// </summary>
+    private Dictionary<int, DistributionBoard> goDistributionBoards = new Dictionary<int, DistributionBoard>();
+
+    /// <summary>
     /// Se llama en el Awake del GameManager
     /// </summary>
     void AwakeWebsite()
@@ -71,6 +96,9 @@ public partial class GameManager : MonoBehaviour
         UriUnitsProperties = new Uri(UriWebsite, "UnitsProperties");
         UriUnitsBattleProperties = new Uri(UriWebsite, "UnitsBattleProperties");
         UriVersionFile = new Uri(UriWebsite, $"{GetPlatformPath()}/version.txt?rand={UnityEngine.Random.Range(0, int.MaxValue)}");
+        UriBoardConstants = new Uri(UriWebsite, "BoardConstants");
+        UriDistributionBoards = new Uri(UriWebsite, "DistributionBoards");
+        UriDistributionBoardsUnitCoordinates = new Uri(UriWebsite, "DistributionBoardsUnitCoordinates");
 
         string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
@@ -91,16 +119,24 @@ public partial class GameManager : MonoBehaviour
     private void StartWebsite()
     {
         //<< Pedimos los UnitBattleProperties.
-        GameManager.Run(GetObjectDTO<UnitBattleProperties[]>(UriUnitsBattleProperties, OnGetUnitsBattleProperties), nameof(UriUnitsProperties));
+        GameManager.Run(GetObjectDTO<UnitBattleProperties[]>(UriUnitsBattleProperties, OnGetUnitsBattleProperties), nameof(UriUnitsBattleProperties));
 
         //<< Pedimos los UnitProperties.
-        GameManager.Run(GetObjectDTO<UnitProperties[]>(UriUnitsProperties, OnGetUnitsProperties), nameof(UriUnitsBattleProperties));
+        GameManager.Run(GetObjectDTO<UnitProperties[]>(UriUnitsProperties, OnGetUnitsProperties), nameof(UriUnitsProperties));
+
+        //<< Pedimos las constantes del tablero.
+        GameManager.Run(GetObjectDTO<BoardConstants>(UriBoardConstants, OnGetBoardConstants), nameof(UriBoardConstants));
+
+        //<< Pedimos los tableros de distribución.
+        GameManager.Run(GetObjectDTO<DistributionBoard[]>(UriDistributionBoards, OnGetDistributionBoards), nameof(UriDistributionBoards));
+
+        //<< Pedimos los tableros de distribución.
+        GameManager.Run(GetObjectDTO<DistributionBoardUnitCoordinates[]>(UriDistributionBoardsUnitCoordinates, OnGetDistributionBoardsUnitCoordinates), nameof(UriDistributionBoardsUnitCoordinates));
     }
 
     /// <summary>
     /// Callback de cuando nos dan las propiedades de las unidades.
     /// </summary>
-    /// <param name="loUnitProperties"></param>
     private void OnGetUnitsProperties(UnitProperties[] loUnitsProperties)
     {
         foreach (UnitProperties loUnitProperties in loUnitsProperties) goUnitsProperties.Add(loUnitProperties.Id, loUnitProperties);
@@ -109,10 +145,39 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Callback de cuando nos dan las propiedades de batalla de las unidades.
     /// </summary>
-    /// <param name="loUnitsBattleProperties"></param>
     private void OnGetUnitsBattleProperties(UnitBattleProperties[] loUnitsBattleProperties)
     {
         foreach (UnitBattleProperties loUnitBattleProperties in loUnitsBattleProperties) goUnitsBattleProperties.Add(loUnitBattleProperties.Id, loUnitBattleProperties);
+    }
+
+    /// <summary>
+    /// Obtenemos las constantes del tablero.
+    /// </summary>
+    private void OnGetBoardConstants(BoardConstants loBoardConstants)
+    {
+        goBoardConstants = loBoardConstants;
+    }
+
+    /// <summary>
+    /// Obtenemos los tableros de distribución.
+    /// </summary>
+    private void OnGetDistributionBoards(DistributionBoard[] loDistributionBoards)
+    {
+        foreach (DistributionBoard loDistributionBoard in loDistributionBoards) goDistributionBoards.Add(loDistributionBoard.Id, loDistributionBoard);
+    }
+
+    /// <summary>
+    /// Obtenemos las coordenadas de las unidades en los tableros de distribución.
+    /// </summary>
+    private void OnGetDistributionBoardsUnitCoordinates(DistributionBoardUnitCoordinates[] loDistributionBoardsUnitCoordinates)
+    {
+        if (loDistributionBoardsUnitCoordinates == null) return;
+        DistributionBoard loDistributionBoard;
+        foreach (DistributionBoardUnitCoordinates loUnitCoordinates in loDistributionBoardsUnitCoordinates)
+        {
+            if (!goDistributionBoards.TryGetValue(loUnitCoordinates.DistributionBoardId, out loDistributionBoard)) continue;
+            loDistributionBoard.AddUnit(loUnitCoordinates.UnitPropertiesId, loUnitCoordinates.X, loUnitCoordinates.Z);
+        }
     }
 
     /// <summary>
@@ -146,6 +211,20 @@ public partial class GameManager : MonoBehaviour
                     UnitProperties loUnitProperties = goUnitsProperties[lnUnitPropertiesId];
                     UnitBattleProperties loUnitBattleProperties = goUnitsBattleProperties[loUnitProperties.UnitBattlePropertiesId];
                     loCallback.Invoke(loUnitBattleProperties, loUnitProperties);
+                }
+                break;
+
+            case GameCommand.GetDistributionBoardDimensions:
+                {
+                    UnityAction<int, int> loCallback = (UnityAction<int, int>)loParams[0];
+                    loCallback.Invoke(goBoardConstants.Widht, goBoardConstants.DistributionBoardLenght);
+                }
+                break;
+
+            case GameCommand.GetDistributionBoards:
+                {
+                    UnityAction<IEnumerable<DistributionBoard>> loCallback = (UnityAction<IEnumerable<DistributionBoard>>)loParams[0];
+                    loCallback.Invoke(goDistributionBoards.Values);
                 }
                 break;
             default: break;

@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerClickHandler
@@ -307,7 +308,7 @@ public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHa
             return;
         }
 
-        unitContainer.position = Input.mousePosition;
+        unitContainer.position = Mouse.current.position.ReadValue();
     }
 
     /// <summary>

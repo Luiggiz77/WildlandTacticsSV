@@ -62,14 +62,14 @@ public class UICamp : UIView
     private Vector2 goDistributionBoardsParentSize;
 
     /// <summary>
-    /// Ancho del tablero (cuadrantes).
+    /// Ancho del tablero de distribución (cuadrantes).
     /// </summary>
-    private int gnBoardWidht = 6;
+    private int gnDistributionBoardWidht = 6;
 
     /// <summary>
-    /// Largo del tablero (cuadrantes).
+    /// Largo del tablero de distribución (cuadrantes).
     /// </summary>
-    private int gnBoardLenght = 7;
+    private int gnDistributionBoardLenght = 7;
 
     /// <summary>
     /// Para pedir las instancias al momento de cambiar las unidades de posicion.
@@ -181,10 +181,10 @@ public class UICamp : UIView
         goDistributionBoardsParentSize = (panelContentDistributionBoards.transform.parent as RectTransform).sizeDelta;
 
         //<< Pedimos la configuracion del tablero.
-        GameManager.Send(GameCommand.GetBoardProperties, new UnityAction<int, int>(OnGetBoardDimensions));
+        GameManager.Send(GameCommand.GetDistributionBoardDimensions, new UnityAction<int, int>(OnGetDistributionBoardDimensions));
 
         //<< Actualizamos nuestro tablero de distribución y unidades.
-        OnUpdateDistributionBoardsAndUnits(false);
+        OnUpdateDistributionBoardsAndUnits();
     }
 
     /// <summary>
@@ -226,29 +226,29 @@ public class UICamp : UIView
     }
 
     /// <summary>
-    /// Callback para recibir las propiedades del tablero.
+    /// Callback para recibir las dimensiones del tablero de distribución.
     /// </summary>
     /// <param name="loBoardProperties"></param>
-    private void OnGetBoardDimensions(int lnBoardWidht, int lnBoardLenght)
+    private void OnGetDistributionBoardDimensions(int lnWidht, int lnLenght)
     {
-        gnBoardWidht = lnBoardWidht;
-        gnBoardLenght = lnBoardLenght;
+        gnDistributionBoardWidht = lnWidht;
+        gnDistributionBoardLenght = lnLenght;
 
         //<< Obtenemos el tamaño del array con base en el tamaño del tablero de distribución.
-        int lnLenght = gnBoardWidht * gnBoardLenght;
+        int lnSize = gnDistributionBoardWidht * gnDistributionBoardLenght;
 
         //<< Revisamos si tenemos que cambiar el tamaño del tablero.
-        if (goUIDistributionBoardCells != null && goUIDistributionBoardCells.Length == lnLenght) return;
+        if (goUIDistributionBoardCells != null && goUIDistributionBoardCells.Length == lnSize) return;
 
         //<< Creamos el array para obtener las busquedas de instancias.
-        goUIDistributionBoardCells = new UIDistributionBoardCell[lnLenght];
+        goUIDistributionBoardCells = new UIDistributionBoardCell[lnSize];
     }
 
     /// <summary>
     /// Callback de cuando recibimos los tableros de distribución.
     /// </summary>
     /// <param name="loUnitIds"></param>
-    private void OnGetDistributionBoards(bool lbOpponent, IEnumerable<DistributionBoard> loDistributionBoards)
+    private void OnGetDistributionBoards(IEnumerable<DistributionBoard> loDistributionBoards)
     {
         //<< Configuramos los tableros de distribución.
         UIDistributionBoard loUIDistributionBoard;
@@ -256,7 +256,7 @@ public class UICamp : UIView
         loUIDistributionBoard = prefabUIDistributionBoardUser;
         loPrefabUIDistributionBoardCell = prefabUIDistributionBoardCellUser;
 
-        SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoards.transform, panelScrollRectDistributionBoards, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnBoardWidht, gnBoardLenght, distributionBoardSettings, loUIDistributionBoard, loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out _, out _, lbOpponent);
+        SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoards.transform, panelScrollRectDistributionBoards, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidht, gnDistributionBoardLenght, distributionBoardSettings, loUIDistributionBoard, loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out _, out _);
 
         //<< Determinamos el padding superior e inferior que debe tener el horizontallayoutgroup
         int lnPadding = Mathf.FloorToInt(goDistributionBoardsParentSize.x - loDistributionBoardSize.x);
@@ -272,7 +272,7 @@ public class UICamp : UIView
 
         foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
         {
-            goDistributionBoardsIds.Add(loDistributionBoard.DistributionBoardId);
+            goDistributionBoardsIds.Add(loDistributionBoard.Id);
             goDistributionBoardsNames.Add(loDistributionBoard.Name);
         }
 
@@ -291,7 +291,7 @@ public class UICamp : UIView
     /// <param name="loPrefabUIDistributionBoard"></param>
     /// <param name="loPrefabUIDistributionBoardCell"></param>
     /// <returns>El ancho y alto del tablero de distribución.</returns>
-    internal static void SetupDistributionBoards(IEnumerable<DistributionBoard> loDistributionBoards, Transform loUIDistributionBoardsParent, ScrollRect loUIDistributionBoardsScrollRect, float lnDistributionBoardWidth, float lnDistributionBoardHeight, int lnBoardWidth, int lnBoardLenght, UIDistributionBoardSettings loUIDistributionBoardSettings, UIDistributionBoard loPrefabUIDistributionBoard, UIDistributionBoardCell loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out float lnCellSize, out float lnPaddingTop, bool lbOpponent)
+    internal static void SetupDistributionBoards(IEnumerable<DistributionBoard> loDistributionBoards, Transform loUIDistributionBoardsParent, ScrollRect loUIDistributionBoardsScrollRect, float lnDistributionBoardWidth, float lnDistributionBoardHeight, int lnBoardWidth, int lnBoardLenght, UIDistributionBoardSettings loUIDistributionBoardSettings, UIDistributionBoard loPrefabUIDistributionBoard, UIDistributionBoardCell loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out float lnCellSize, out float lnPaddingTop)
     {
         int lnHashCodeDistributionBoard = loPrefabUIDistributionBoard.GetHashCode();
         int lnHashCodeDistributionBoardCell = loPrefabUIDistributionBoardCell.GetHashCode();
@@ -325,9 +325,7 @@ public class UICamp : UIView
         }
 
         //lnCellSize -= 30f;
-
         Vector2 loCellSize = new Vector2(lnCellSize, lnCellSize);
-        int lnOpponent = Convert.ToInt32(lbOpponent);
 
         //<< Creamos los nuevos elementos.
         foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
@@ -349,7 +347,7 @@ public class UICamp : UIView
             loUIDistributionBoard.gridLayoutGroup.constraintCount = lnBoardLenght;
 
             //<< Asignamos el id del tablero de distribución.
-            loUIDistributionBoard.gnDistributionBoardId = loDistributionBoard.DistributionBoardId;
+            loUIDistributionBoard.gnDistributionBoardId = loDistributionBoard.Id;
 
             //<< Asignamos el nombre del tablero de distribución. //<< TEMP VLAD
             //loUIDistributionBoard.distributionBoardName.text = loDistributionBoard.Name;
@@ -385,12 +383,12 @@ public class UICamp : UIView
                     loUIDistributionBoardCell.transform.localScale = Vector3.one;
                     loUIDistributionBoardCell.boxCollider2DIcon.size = loCellSize;
                     loUIDistributionBoardCell.boxCollider2DBackground.size = loCellSize;
-                    loUIDistributionBoardCell.SetDistributionBoardId(loDistributionBoard.DistributionBoardId);
+                    loUIDistributionBoardCell.SetDistributionBoardId(loDistributionBoard.Id);
                     loUIDistributionBoardCell.SetCoordinates(x, z);
                     loUIDistributionBoardCell.SetUnitPropertiesId(lnUnitPropertiesId);
                     loUIDistributionBoardCell.SetScrollRect(loUIDistributionBoardsScrollRect);
                     loUIDistributionBoardCell.SetActionAllowingScrollRect(null);
-                    loUIDistributionBoardCell.name = $"{loDistributionBoard.DistributionBoardId}_{x}_{z}_{lnOpponent}";
+                    loUIDistributionBoardCell.name = $"{loDistributionBoard.Id}_{x}_{z}";
                 }
             }
         }
@@ -435,7 +433,7 @@ public class UICamp : UIView
     /// Se llama para actualizar las unidades así como los tableros de distribución.
     /// </summary>
     /// <param name="lbOpponent"></param>
-    private void OnUpdateDistributionBoardsAndUnits(bool lbOponent)
+    private void OnUpdateDistributionBoardsAndUnits()
     {
         //<< Desactivamos los dos tipos de cells.
         GameManager.DeactivateSpawns(prefabUIDistributionBoardCellUser.GetHashCode());
@@ -448,7 +446,7 @@ public class UICamp : UIView
         GameManager.Send(GameCommand.GetUnitIds, new UnityAction<int[]>(OnGetUnitIds));
 
         //<< Pedimos nuestros tableros de distribución.
-        GameManager.Send(GameCommand.GetDistributionBoards, new UnityAction<bool, IEnumerable<DistributionBoard>>(OnGetDistributionBoards));
+        GameManager.Send(GameCommand.GetDistributionBoards, new UnityAction<IEnumerable<DistributionBoard>>(OnGetDistributionBoards));
     }
 
     /// <summary>

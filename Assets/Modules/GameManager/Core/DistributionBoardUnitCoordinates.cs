@@ -1,20 +1,31 @@
-using UnityEngine;
+using System;
 
+[Serializable]
 public class DistributionBoardUnitCoordinates
 {
-    [Tooltip("Id del objeto")]
+    /// <summary>
+    /// Id del objeto
+    /// </summary>
     public int Id;
 
-    [Tooltip("Id de la unidad")]
+    /// <summary>
+    /// Id de la unidad
+    /// </summary>
     public int UnitPropertiesId;
 
-    [Tooltip("Id del tablero de distribución")]
+    /// <summary>
+    /// Id del tablero de distribución
+    /// </summary>
     public int DistributionBoardId;
 
-    [Tooltip("Coordenada en X.")]
+    /// <summary>
+    /// Coordenada en X.
+    /// </summary>
     public int X;
 
-    [Tooltip("Coordenada en Z.")]
+    /// <summary>
+    /// Coordenada en Z.
+    /// </summary>
     public int Z;
 
     public DistributionBoardUnitCoordinates() { }

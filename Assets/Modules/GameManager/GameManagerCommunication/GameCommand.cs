@@ -157,6 +157,12 @@ public enum GameCommand : int
     GetBoardDimensions,
 
     /// <summary>
+    /// Da las dimensiones del tablero de distribución.
+    /// param[0] = UnityAction<int,int> GetDistributionBoardDimensions - Callback que recibe las dimensiones del tablero de distribución.
+    /// </summary>
+    GetDistributionBoardDimensions,
+
+    /// <summary>
     /// Da las propiedades del tablero.
     /// param[0] = UnityAction<BoardProperties> GetBoardProperties - Callback que recibe configuración del tablero.
     /// </summary>
@@ -170,8 +176,7 @@ public enum GameCommand : int
 
     /// <summary>
     /// Da los tableros de distribución del usuario.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si el tablero es del usuario o del oponente. True indica que es del oponente.
-    /// param[1] = UnityAction<bool,IEnumerable<DistributionBoard>> RetieveDistributionBoards - Callback que da los tableros de distribucion almacenados y el boleano nos indica si es de oponente.
+    /// param[0] = UnityAction<IEnumerable<DistributionBoard>> RetieveDistributionBoards - Callback que da los tableros de distribucion almacenados.
     /// </summary>
     GetDistributionBoards,
 
