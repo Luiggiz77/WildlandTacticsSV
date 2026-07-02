@@ -12,6 +12,7 @@ public partial class GameManager : MonoBehaviour
         internal static string Name = "{purchasable}";
         internal static string Cost = "{cost}";
         internal static string Currency = "{currencyIcon}";
+        internal static string MaxUnits = "{maxunits}";
     }
 
     /// <summary>

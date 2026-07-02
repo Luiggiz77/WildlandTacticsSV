@@ -60,6 +60,16 @@ public partial class GameManager : MonoBehaviour
     private static Uri UriDistributionBoardsUnitCoordinates = null;
 
     /// <summary>
+    /// Url para indicar que debemos agregar una unidad al tablero de distribución.
+    /// </summary>
+    private static Uri UriAddUnitToDistributionBoard = null;
+
+    /// <summary>
+    /// Url para indicar que debemos remover una unidad al tablero de distribución.
+    /// </summary>
+    private static Uri UriRemoveUnitFromDistributionBoard = null;
+
+    /// <summary>
     /// Llaves de los player prefs.
     /// </summary>
     private const string ClientIdKey = "ClientId";
@@ -86,9 +96,14 @@ public partial class GameManager : MonoBehaviour
     private Dictionary<int, DistributionBoard> goDistributionBoards = new Dictionary<int, DistributionBoard>();
 
     /// <summary>
+    /// Nos indica el tablero de distribución seleccionado.
+    /// </summary>
+    private static int gnSelectedDistributionBoardId = 0;
+
+    /// <summary>
     /// Se llama en el Awake del GameManager
     /// </summary>
-    void AwakeWebsite()
+    private void AwakeWebsite()
     {
         UriWebsite = new Uri(WebsiteURL);
         UriLogin = new Uri(UriWebsite, "login");
@@ -99,6 +114,8 @@ public partial class GameManager : MonoBehaviour
         UriBoardConstants = new Uri(UriWebsite, "BoardConstants");
         UriDistributionBoards = new Uri(UriWebsite, "DistributionBoards");
         UriDistributionBoardsUnitCoordinates = new Uri(UriWebsite, "DistributionBoardsUnitCoordinates");
+        UriAddUnitToDistributionBoard = new Uri(UriWebsite, "AddUnitToDistributionBoard");
+        UriRemoveUnitFromDistributionBoard = new Uri(UriWebsite, "RemoveUnitFromDistributionBoard");
 
         string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
@@ -129,9 +146,6 @@ public partial class GameManager : MonoBehaviour
 
         //<< Pedimos los tableros de distribución.
         GameManager.Run(GetObjectDTO<DistributionBoard[]>(UriDistributionBoards, OnGetDistributionBoards), nameof(UriDistributionBoards));
-
-        //<< Pedimos los tableros de distribución.
-        GameManager.Run(GetObjectDTO<DistributionBoardUnitCoordinates[]>(UriDistributionBoardsUnitCoordinates, OnGetDistributionBoardsUnitCoordinates), nameof(UriDistributionBoardsUnitCoordinates));
     }
 
     /// <summary>
@@ -163,7 +177,17 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     private void OnGetDistributionBoards(DistributionBoard[] loDistributionBoards)
     {
-        foreach (DistributionBoard loDistributionBoard in loDistributionBoards) goDistributionBoards.Add(loDistributionBoard.Id, loDistributionBoard);
+        foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
+        {
+            loDistributionBoard.Setup(goBoardConstants.Widht, goBoardConstants.DistributionBoardLenght);
+            goDistributionBoards.Add(loDistributionBoard.Id, loDistributionBoard);
+        }
+
+        //<< Indicamos cual es el primer tablero de distribución seleccionado.
+        gnSelectedDistributionBoardId = goDistributionBoards.First().Key;
+
+        //<< Pedimos las unidades y sus coordenadas de los tableros de distribución.
+        GameManager.Run(GetObjectDTO<DistributionBoardUnitCoordinates[]>(UriDistributionBoardsUnitCoordinates, OnGetDistributionBoardsUnitCoordinates), nameof(UriDistributionBoardsUnitCoordinates));
     }
 
     /// <summary>
@@ -227,6 +251,11 @@ public partial class GameManager : MonoBehaviour
                     loCallback.Invoke(goDistributionBoards.Values);
                 }
                 break;
+
+            case GameCommand.UnitExistsOnDistributionBoard: UnitExistsOnDistributionBoard((int)loParams[0], (int)loParams[1], (UnityAction<bool>)loParams[1]); break;
+            case GameCommand.AddUnitToDistributionBoard: Run(AddUnitToDistributionBoard((int)loParams[0], (int)loParams[1], (int)loParams[2], (int)loParams[3]), nameof(GameCommand.AddUnitToDistributionBoard)); break;
+            case GameCommand.RemoveUnitFromDistributionBoard: Run(RemoveUnitFromDistributionBoard((int)loParams[0], (int)loParams[1]), nameof(GameCommand.RemoveUnitFromDistributionBoard)); break;
+
             default: break;
         }
     }
@@ -308,7 +337,7 @@ public partial class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Se llama para hacer login forzado hasta que se logre.
+    /// Se llama para hacer login forzado hasta que se logre. (Forzado)
     /// </summary>
     /// <returns></returns>
     private static IEnumerator Login()
@@ -324,6 +353,40 @@ public partial class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Se llama para hacer login forzado hasta que se logre con control de error.
+    /// </summary>
+    /// <returns></returns>
+    private static IEnumerator Login(CoroutineResult<string> loResult)
+    {
+        //<< Revisamos si hay internet.
+        if (Application.internetReachability == NetworkReachability.NotReachable)
+        {
+            loResult.OnFailed($"{nameof(Application.internetReachability)}: {nameof(NetworkReachability.NotReachable)}");
+            yield break;
+        }
+
+        //<< Si el token es valido y tenemos internet continuamos correctamente.
+        if (IsTokenValid())
+        {
+            loResult.OnCompleted();
+            yield break;
+        }
+
+        //<< Revisamos si podemos hacer login.
+        yield return Post(UriLogin, OnWebLogin, null, new DTO2<string, string>(nameof(ClientId), ClientId()), new DTO2<string, string>(nameof(Password), Password()));
+
+        //<< Revisamos si el token es valido.
+        if (!IsTokenValid())
+        {
+            loResult.OnFailed($"Token invalid.");
+            yield break;
+        }
+
+        loResult.OnCompleted();
+        yield break;
+    }
+
+    /// <summary>
     /// Se llama para pedir un json al sitio web.
     /// </summary>
     /// <param name="lcUrl"></param>
@@ -333,29 +396,6 @@ public partial class GameManager : MonoBehaviour
     {
         yield return Login();
         yield return Post(loUri, loCallback, null, loParams);
-        yield break;
-    }
-
-    /// <summary>
-    /// Nos da el objeto con base en el string descargado.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="loUri"></param>
-    /// <param name="loCallback"></param>
-    /// <param name="loParams"></param>
-    /// <returns></returns>
-    private static IEnumerator GetObject<T>(Uri loUri, UnityAction<T> loCallback, params DTO2<string, string>[] loParams) where T : class
-    {
-        yield return Login();
-        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
-        yield return Post(loUri, null, loCoroutineResult, loParams);
-        if (!loCoroutineResult.Completed) loCallback.Invoke(null);
-        else
-        {
-            string lcJson = loCoroutineResult.Object;
-            T loObject = JsonUtility.FromJson<T>(lcJson);
-            loCallback.Invoke(loObject);
-        }
         yield break;
     }
 
@@ -420,4 +460,148 @@ public partial class GameManager : MonoBehaviour
             default: return "UnknownPlatform";
         }
     }
+
+    #region GAME
+    /// <summary>
+    /// Nos indica si la unidad se encuentra en algún mapa de distribución.
+    /// </summary>
+    /// <param name="lnUnitPropertiesId"></param>
+    /// <param name="loUnitExistsOnDistributionBoard"></param>
+    private void UnitExistsOnDistributionBoard(int lnDistributionBoardId, int lnUnitPropertiesId, UnityAction<bool> loUnitExistsOnDistributionBoard)
+    {
+        loUnitExistsOnDistributionBoard.Invoke(goDistributionBoards[lnDistributionBoardId].Contains(lnUnitPropertiesId));
+    }
+
+    /// <summary>
+    /// Para establecer una unidad en el tablero de distribución.
+    /// </summary>
+    /// <param name="lnId"></param>
+    /// <returns></returns>
+    private IEnumerator AddUnitToDistributionBoard(int lnDistributionBoardId, int lnUnitPropertiesId, int lnDistributionBoardX, int lnDistributionBoardZ)
+    {
+        //<< Revisamos si tenemos login.
+        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        yield return Login(loCoroutineResult);
+        if (!loCoroutineResult.Completed)
+        {
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
+            yield break;
+        }
+
+        //<< Obtenemos el tablero de distribución.
+        DistributionBoard loDistributionBoard = goDistributionBoards[lnDistributionBoardId];
+
+        //<< Revisamos si en la posicion hay otra unidad.
+        int lnUnitPropertiesIdSwitch = loDistributionBoard.GetIdOf(lnDistributionBoardX, lnDistributionBoardZ);
+
+        //<< Si es la misma unidad en el mismo lugar no hacemos nada.
+        if(lnUnitPropertiesIdSwitch == lnUnitPropertiesId) yield break;
+
+        //<< Revisamos si nos pasariamos del maximo de unidades permitidas.
+        if (loDistributionBoard.GetUnitsCount() + 1 > goBoardConstants.MaxUnits && lnUnitPropertiesIdSwitch <= 0)
+        {
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.MaxUnits).Replace(TextTags.MaxUnits, $"{goBoardConstants.MaxUnits}"), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
+            yield break;
+        }
+
+        //<< Ya que llegamos aqui pedimos al servidor que haga la actualización del tablero de distribución.
+        yield return Post(UriAddUnitToDistributionBoard, null, loCoroutineResult, new DTO2<string, string>($"DistributionBoardId", $"{lnDistributionBoardId}"), new DTO2<string, string>($"UnitPropertiesId", $"{lnUnitPropertiesId}"), new DTO2<string, string>($"DistributionBoardX", $"{lnDistributionBoardX}"), new DTO2<string, string>($"DistributionBoardZ", $"{lnDistributionBoardZ}"));
+        if (!loCoroutineResult.Completed)
+        {
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
+            yield break;
+        }
+
+        //<< Ya que se guardó el cambio en servidor lo hacemos en local.
+
+        //<< Si hay unidad de intercambio tambien debe removerse del mapa previo a ser agregada.
+        if (lnUnitPropertiesIdSwitch > 0) Send(GameCommand.RemovedUnitFromDistributionBoard, lnDistributionBoardId, lnUnitPropertiesIdSwitch);
+
+        //<< Removemos rastro de la unidad del tablero si es que existe en el, de ser así avisamos.
+        if (loDistributionBoard.RemoveUnit(lnUnitPropertiesId, out int lnX, out int lnZ)) Send(GameCommand.RemovedUnitFromDistributionBoard, lnDistributionBoardId, lnUnitPropertiesId);
+
+        //<< Agregamos la unidad en la posicion dada.
+        loDistributionBoard.AddUnit(lnUnitPropertiesId, lnDistributionBoardX, lnDistributionBoardZ);
+
+        //<< Si habia una unidad previa en el lugar sabemos que debemos intercambiar posiciones entre unidades.
+        if (lnUnitPropertiesIdSwitch > 0 && (lnDistributionBoardX != lnX || lnDistributionBoardZ != lnZ))
+        {
+            //<< Agregamos la unidad del lugar en la posicion original de la otra unidad.
+            loDistributionBoard.AddUnit(lnUnitPropertiesIdSwitch, lnX, lnZ);
+        }
+
+        //<< Avisamos que se agrego la unidad al tablero de distribución.
+        Send(GameCommand.AddedUnitToDistributionBoard, lnDistributionBoardId, lnUnitPropertiesId, lnDistributionBoardX, lnDistributionBoardZ);
+
+        //<< Si habia una unidad previa en el lugar sabemos que debemos intercambiar posiciones entre unidades.
+        if (lnUnitPropertiesIdSwitch > 0 && (lnDistributionBoardX != lnX || lnDistributionBoardZ != lnZ))
+        {
+            //<< Avisamos que se agrego la unidad al tablero de distribución.
+            Send(GameCommand.AddedUnitToDistributionBoard, lnDistributionBoardId, lnUnitPropertiesIdSwitch, lnX, lnZ);
+        }
+    }
+
+    /// <summary>
+    /// Para remover una unidad del tablero de distribución.
+    /// </summary>
+    /// <param name="lnId"></param>
+    /// <returns></returns>
+    private IEnumerator RemoveUnitFromDistributionBoard(int lnDistributionBoardId, int lnUnitPropertiesId)
+    {
+        //<< Revisamos si tenemos login.
+        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        yield return Login(loCoroutineResult);
+        if (!loCoroutineResult.Completed)
+        {
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
+            yield break;
+        }
+
+        //<< Obtenemos el tablero de distribución.
+        DistributionBoard loDistributionBoard = goDistributionBoards[lnDistributionBoardId];
+
+        //<< Revisamos que contenga la unidad.
+        if (!loDistributionBoard.Contains(lnUnitPropertiesId))
+        {
+            Send(GameCommand.RemovedUnitFromDistributionBoard, lnDistributionBoardId, lnUnitPropertiesId);
+            yield break;
+        }
+
+        //<< Ya que llegamos aqui pedimos al servidor que haga la actualización del tablero de distribución.
+        yield return Post(UriRemoveUnitFromDistributionBoard, null, loCoroutineResult, new DTO2<string, string>($"DistributionBoardId", $"{lnDistributionBoardId}"), new DTO2<string, string>($"UnitPropertiesId", $"{lnUnitPropertiesId}"));
+        if (!loCoroutineResult.Completed)
+        {
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
+            yield break;
+        }
+
+        //<< Ya que se guardó el cambio en servidor lo hacemos en local.
+        loDistributionBoard.RemoveUnit(lnUnitPropertiesId);
+        Send(GameCommand.RemovedUnitFromDistributionBoard, lnDistributionBoardId, lnUnitPropertiesId);
+        yield break;
+    }
+
+    ///// <summary>
+    ///// Se llama para remover una unidad del mapa de distribución con base en el id dado. (Temp)
+    ///// </summary>
+    ///// <param name="lnUnitPropertiesId"></param>
+    //private void RemoveUnitFromDistributionBoard(int lnUnitPropertiesId, int lnDistributionBoardId)
+    //{
+    //    //<< Obtenemos el tablero.
+    //    DistributionBoard loDistributionBoard;
+
+    //    UnitProperties loUnitProperties = GetUnitProperties(lnUnitPropertiesId);
+    //    if (loUnitProperties.Opponent) loDistributionBoard = goDistributionBoardsOpponent.FirstOrDefault(x => x.DistributionBoardId == lnDistributionBoardId);
+    //    else loDistributionBoard = goDistributionBoardsUser.FirstOrDefault(x => x.DistributionBoardId == lnDistributionBoardId);
+
+    //    //<< Removemos rastro de la unidad del tablero si es que existe en el.
+    //    loDistributionBoard.RemoveUnit(lnUnitPropertiesId);
+
+    //    //<< Guadamos localmente el tablero de distribución. (Temp) Nota: No se sabe si se guardaran en servidor tambien. FINDME
+    //    PlayerPrefsJson.Set($"{(loUnitProperties.Opponent ? PlayerPrefsJson.Key.DistributionBoardOpponent : PlayerPrefsJson.Key.DistributionBoardUser)}{lnDistributionBoardId}", loDistributionBoard);
+
+    //    //<< Avisamos que se ha removido la unidad del tablero de distribución.
+    //    Send(GameCommand.RemovedUnitFromDistributionBoard, lnUnitPropertiesId, lnDistributionBoardId);
+    //}
+    #endregion
 }

@@ -212,8 +212,8 @@ public enum GameCommand : int
 
     /// <summary>
     /// Agrega una unidad en el tablero de distribución dado.
-    /// param[0] = int UnitPropertiesId id de la unidad que se asigna al tablero de distribución.
-    /// param[1] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[0] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[1] = int lnUnitPropertiesId id de la unidad que se asigna al tablero de distribución.
     /// param[2] = int lnDistributionBoardX coordenada en X del tablero de distribución.
     /// param[3] = int lnDistributionBoardZ coordenada en Z del tablero de distribución.
     /// </summary>
@@ -221,8 +221,8 @@ public enum GameCommand : int
 
     /// <summary>
     /// Indica que se agregó una unidad en el tablero de distribución dado.
-    /// param[0] = int lnUnitPropertiesId id de la unidad que se asigna al tablero de distribución.
-    /// param[1] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[0] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[1] = int lnUnitPropertiesId id de la unidad que se asigna al tablero de distribución.
     /// param[2] = int lnDistributionBoardX coordenada en X del tablero de distribución.
     /// param[3] = int lnDistributionBoardZ coordenada en Z del tablero de distribución.
     /// </summary>
@@ -230,22 +230,23 @@ public enum GameCommand : int
 
     /// <summary>
     /// Remover la unidad del tablero de distribución.
-    /// param[0] = int UnitPropertiesId - Id de la unidad a remover.
-    /// param[1] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[0] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[1] = int lnUnitPropertiesId - Id de la unidad a remover.
     /// </summary>
     RemoveUnitFromDistributionBoard,
 
     /// <summary>
     /// Indica que se ha removido exitosamente la unidad del tablero de distribución.
-    /// param[0] = int UnitPropertiesId - Id de la unidad removida.
-    /// param[1] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[0] = int lnDistributionBoardId id del tablero de distribución.
+    /// param[1] = int lnUnitPropertiesId - Id de la unidad removida.
     /// </summary>
     RemovedUnitFromDistributionBoard,
 
     /// <summary>
-    /// Nos indica si la unidad existe en algun mapa de distribución.
-    /// param[0] = int UnitPropertiesId - Id de las propiedades visuales de la unidad.
-    /// param[1] = UnityAction<bool> UnitExistsOnDistributionBoard - Callback que nos indica si la unidad se encuentra en algún tablero de distribución.
+    /// Nos indica si la unidad existe en algun tablero de distribución.
+    /// param[0] = int lnDistributionBoardId - Id del tablero de distribución.
+    /// param[1] = int lnUnitPropertiesId - Id de las propiedades de la unidad.
+    /// param[2] = UnityAction<bool> UnitExistsOnDistributionBoard - Callback que nos indica si la unidad se encuentra en algún tablero de distribución.
     /// </summary>
     UnitExistsOnDistributionBoard,
 

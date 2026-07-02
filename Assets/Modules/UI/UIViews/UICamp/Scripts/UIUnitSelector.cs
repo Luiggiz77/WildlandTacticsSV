@@ -38,8 +38,14 @@ public class UIUnitSelector : UIUnit
         {
             case GameCommand.RemovedUnitFromDistributionBoard:
             case GameCommand.AddedUnitToDistributionBoard:
-                int lnUnitPropertiesId = (int)loParams[0];
-                if (lnUnitPropertiesId == GetUnitId()) GameManager.Send(GameCommand.UnitExistsOnDistributionBoard, lnUnitPropertiesId, new UnityAction<bool>(UnitExistsOnDistributionBoard));
+                {
+                    int lnDistributionBoardId = (int)loParams[0];
+                    int lnUnitPropertiesId = (int)loParams[1];
+                    if (GetDistributionBoardId() != lnDistributionBoardId) return;
+                    if (GetUnitId() != lnUnitPropertiesId) return;
+                    GameManager.Send(GameCommand.UnitExistsOnDistributionBoard, GetDistributionBoardId(), lnUnitPropertiesId, new UnityAction<bool>(UnitExistsOnDistributionBoard));
+                }
+                
                 break;
             default: break;
         }
@@ -49,12 +55,12 @@ public class UIUnitSelector : UIUnit
     /// Se llama para establecer el id de la unidad.
     /// </summary>
     /// <param name="lnUnitPropertiesId"></param>
-    public override void SetUnitPropertiesId(int lnUnitPropertiesId)
+    public void SetUnitPropertiesId(int lnUnitPropertiesId, int lnDistributionBoardId)
     {
-        base.SetUnitPropertiesId(lnUnitPropertiesId);
+        SetUnitPropertiesId(lnUnitPropertiesId);
 
         //<< Preguntamos si la unidad se encuentra en algun tablero de distribución.
-        GameManager.Send(GameCommand.UnitExistsOnDistributionBoard, lnUnitPropertiesId, new UnityAction<bool>(UnitExistsOnDistributionBoard));
+        GameManager.Send(GameCommand.UnitExistsOnDistributionBoard, GetDistributionBoardId(), lnUnitPropertiesId, new UnityAction<bool>(UnitExistsOnDistributionBoard));
     }
 
     /// <summary>

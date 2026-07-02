@@ -82,14 +82,9 @@ public class UICamp : UIView
     private Dictionary<int, List<UnitRole>> goUnitTypes = new Dictionary<int, List<UnitRole>>();
 
     /// <summary>
-    /// Son los ids de nuestros tableros de distribución del usuario.
-    /// </summary>
-    private List<int> goDistributionBoardsIds = new List<int>();
-
-    /// <summary>
     /// Nombres de los tableros de distribución del usuario.
     /// </summary>
-    private List<string> goDistributionBoardsNames = new List<string>();
+    private List<DistributionBoard> goDistributionBoards = new List<DistributionBoard>();
 
     /// <summary>
     /// Nos indica el indice del tablero seleccionado.
@@ -267,14 +262,8 @@ public class UICamp : UIView
         panelContentDistributionBoards.padding.left = lnHalfPadding;
         panelContentDistributionBoards.padding.right = lnHalfPadding;
 
-        goDistributionBoardsIds.Clear();
-        goDistributionBoardsNames.Clear();
-
-        foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
-        {
-            goDistributionBoardsIds.Add(loDistributionBoard.Id);
-            goDistributionBoardsNames.Add(loDistributionBoard.Name);
-        }
+        goDistributionBoards.Clear();
+        goDistributionBoards.AddRange(loDistributionBoards);
 
         UpdateBoardTextName();
     }
@@ -432,7 +421,6 @@ public class UICamp : UIView
     /// <summary>
     /// Se llama para actualizar las unidades así como los tableros de distribución.
     /// </summary>
-    /// <param name="lbOpponent"></param>
     private void OnUpdateDistributionBoardsAndUnits()
     {
         //<< Desactivamos los dos tipos de cells.
@@ -454,7 +442,7 @@ public class UICamp : UIView
     /// </summary>
     public void OnClickRightArrowUser()
     {
-        if (gnSelectedDistributionBoardIndex >= goDistributionBoardsIds.Count - 1) return;
+        if (gnSelectedDistributionBoardIndex >= goDistributionBoards.Count - 1) return;
         gnSelectedDistributionBoardIndex++;
         UpdateBoardTextName();
         paginationScrollRectDistributionBoards.NextPage();
@@ -473,6 +461,6 @@ public class UICamp : UIView
 
     private void UpdateBoardTextName()
     {
-        distributionBoardName.text = goDistributionBoardsNames[gnSelectedDistributionBoardIndex];
+        distributionBoardName.text = goDistributionBoards[gnSelectedDistributionBoardIndex].Name;
     }
 }

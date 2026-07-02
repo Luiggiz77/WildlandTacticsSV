@@ -357,21 +357,21 @@ public class UIUnit : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHa
         //<< Si no se encontró ningun nombre solo regresamos.
         if (lcObjectName == null)
         {
-            if (gnDistributionBoardId != 0) GameManager.Send(GameCommand.RemoveUnitFromDistributionBoard, gnUnitPropertiesId, gnDistributionBoardId);
+            if (gnDistributionBoardId != 0) GameManager.Send(GameCommand.RemoveUnitFromDistributionBoard, gnDistributionBoardId, gnUnitPropertiesId);
             return;
         }
 
         //<< Obtenemos el nombre del objeto que contiene el collider ya que sabemos que tiene el id del tablero y las coordenadas del cell.
-        int[] loData = lcObjectName.ToIntArray();
-        int lnDistributionBoardId = loData[0];
-        int lnDistributionBoardX = loData[1];
-        int lnDistributionBoardZ = loData[2];
+        string[] loSplit = lcObjectName.Split("_", StringSplitOptions.RemoveEmptyEntries);
+        int lnDistributionBoardId = int.Parse(loSplit[0]);
+        int lnDistributionBoardX = int.Parse(loSplit[1]);
+        int lnDistributionBoardZ = int.Parse(loSplit[2]);
 
-        //<< Solo si es el mismo tablero de distribuci�n realizamos el movimiento de unidad.
+        //<< Solo si es el mismo tablero de distribución realizamos el movimiento de unidad.
         if (gnDistributionBoardId != 0 && gnDistributionBoardId != lnDistributionBoardId) return;
 
-        //<< Pedimos que nos asignen al tablero de distribuci�n.
-        GameManager.Send(GameCommand.AddUnitToDistributionBoard, gnUnitPropertiesId, lnDistributionBoardId, lnDistributionBoardX, lnDistributionBoardZ);
+        //<< Pedimos que nos asignen al tablero de distribución.
+        GameManager.Send(GameCommand.AddUnitToDistributionBoard, lnDistributionBoardId, gnUnitPropertiesId, lnDistributionBoardX, lnDistributionBoardZ);
     }
 
     /// <summary>

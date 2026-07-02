@@ -100,4 +100,8 @@ public enum GameTextWord : int
     /// Reintentar
     /// </summary>
     Retry = 24,
+    /// <summary>
+    /// Ok
+    /// </summary>
+    Ok = 25,
 }

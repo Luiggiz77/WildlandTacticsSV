@@ -36,23 +36,25 @@ public class UIDistributionBoardCell : UIUnit
         {
             case GameCommand.RemovedUnitFromDistributionBoard:
                 {
-                    int lnUnitPropertiesId = (int)loParams[0];
-                    if (lnUnitPropertiesId != GetUnitId()) return;
-                    int lnDistributionBoardId = (int)loParams[1];
+                    int lnDistributionBoardId = (int)loParams[0];
                     if (lnDistributionBoardId != GetDistributionBoardId()) return;
+
+                    int lnUnitPropertiesId = (int)loParams[1];
+                    if (lnUnitPropertiesId != GetUnitId()) return;
+                    
                     SetUnitPropertiesId(0);
                 }
                 break;
 
             case GameCommand.AddedUnitToDistributionBoard:
                 {
-                    int lnDistributionBoardId = (int)loParams[1];
+                    int lnDistributionBoardId = (int)loParams[0];
                     if (lnDistributionBoardId != GetDistributionBoardId()) return;
                     int lnX = (int)loParams[2];
                     if (lnX != GetX()) return;
                     int lnZ = (int)loParams[3];
                     if (lnZ != GetZ()) return;
-                    SetUnitPropertiesId((int)loParams[0]);
+                    SetUnitPropertiesId((int)loParams[1]);
                 }
                 break;
 
