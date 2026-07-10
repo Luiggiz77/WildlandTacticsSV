@@ -1,4 +1,4 @@
-public enum UnitFaction
+public enum UnitFaction : byte
 {
     /// <summary>
     /// Cualquier facción

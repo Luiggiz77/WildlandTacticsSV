@@ -1,23 +1,22 @@
 public class CoroutineResultStruct<T> where T : struct
 {
-    public bool Completed = false;
-    public T Object = default;
+    public bool Completed { get; private set; } = false;
+    public T Result { get; private set; } = default;
 
     public CoroutineResultStruct() { }
     public CoroutineResultStruct(T loDefault)
     {
-        Object = loDefault;
+        Result = loDefault;
     }
 
-    public void OnCompleted(T loObject = default)
-    {
-        Completed = true;
-        Object = loObject;
-    }
-
-    public void OnFailed(T loObject = default)
+    public void Reset()
     {
         Completed = false;
-        Object = loObject;
+    }
+
+    public void SetResult(T loResult)
+    {
+        Completed = true;
+        Result = loResult;
     }
 }

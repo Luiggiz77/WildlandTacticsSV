@@ -4,12 +4,24 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.Initialization;
 using UnityEngine.AddressableAssets.ResourceLocators;
-using UnityEngine.Events;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
 public partial class GameManager : MonoBehaviour
 {
+    private static class AddressableLabel
+    {
+        /// <summary>
+        /// Llave para descargar los addressables.
+        /// </summary>
+        public const string Default = "default";
+
+        /// <summary>
+        /// Llave para descargar los shared shaders.
+        /// </summary>
+        public const string SharedShaders = "shared_shaders";
+    }
+
     /// <summary>
     /// Handle del catalogo.
     /// </summary>
@@ -21,62 +33,178 @@ public partial class GameManager : MonoBehaviour
     private AsyncOperationHandle<IList<Texture2D>> goGameTextures2DHandle;
 
     /// <summary>
+    /// Handle de los unit instances.
+    /// </summary>
+    private AsyncOperationHandle<IList<UnitInstance>> goUnitInstancesHandle;
+
+    /// <summary>
+    /// Handle de los unit elements.
+    /// </summary>
+    private AsyncOperationHandle<IList<UnitElement>> goUnitElementsHandle;
+
+    /// <summary>
+    /// Lista de unit instances que son partes que componen a las unidades, como cabeza, cuerpo, props, etc...
+    /// </summary>
+    private Dictionary<int, UnitAssetBundle> goUnitAssetBundles = new Dictionary<int, UnitAssetBundle>();
+
+    /// <summary>
     /// Se llama ane le start del GameManager
     /// </summary>
     private void StartAdressables()
     {
-        StartCoroutine(InitializeAddressables());
+        StartCoroutine(Setup());
     }
 
     /// <summary>
-    /// Nos indica si debemos o no reiniciar la inicialización.
+    /// Carga todo lo necesario dentro de una sola corrutina.
     /// </summary>
-    /// <param name="lbRetry"></param>
-    private void RestartInitializeAdressables(bool lbRetry)
+    /// <returns></returns>
+    private IEnumerator Setup()
     {
-        if (lbRetry) StartAdressables();
-        else Application.Quit();
+        CoroutineResultStruct<bool> loCoroutineResult = new CoroutineResultStruct<bool>();
+        CoroutineResultStruct<long> loCoroutineResultSize = new CoroutineResultStruct<long>();
+
+        //<< Inicializamos los addressables.
+        yield return RunManagedWhile(InitializeAddressables(loCoroutineResult), loCoroutineResult);
+
+        //<< Obtenemos el catalogo.
+        yield return RunManagedWhile(DownloadCatalog(loCoroutineResult), loCoroutineResult);
+
+        //<< Obtenemos el tamaño de descarga de los Shared Shaders.
+        yield return RunManagedWhile(GetDownloadSize(AddressableLabel.SharedShaders, loCoroutineResult, loCoroutineResultSize), loCoroutineResult);
+
+        //<< FINDME Aqui debemos indicarle el tamaño a la pantalla de Descarga. (Shared_Shaders)
+
+        //<< Obtenemos los Shared Shaders.
+        yield return RunManagedWhile(DownloadAddressables(AddressableLabel.SharedShaders, loCoroutineResult), loCoroutineResult);
+
+        //<< Obtenemos el tamaño de descarga de los elementos default.
+        yield return RunManagedWhile(GetDownloadSize(AddressableLabel.Default, loCoroutineResult, loCoroutineResultSize), loCoroutineResult);
+
+        //<< FINDME Aqui debemos indicarle el tamaño a la pantalla de Descarga. (Default)
+
+        //<< Obtenemos elementos default.
+        yield return RunManagedWhile(DownloadAddressables(AddressableLabel.Default, loCoroutineResult), loCoroutineResult);
+
+        //<< Cargamos las Texture2D en memoria.
+        yield return RunManagedWhile(LoadGameTextures2D(loCoroutineResult), loCoroutineResult);
+
+        //<< Cargamos los UnitAssetBundles (UnitInstances) en memoria.
+        yield return RunManagedWhile(LoadUnitAssetBundles_UnitInstance(loCoroutineResult), loCoroutineResult);
+
+        //<< Cargamos los UnitAssetBundles (UnitElements) en memoria.
+        yield return RunManagedWhile(LoadUnitAssetBundles_UnitElement(loCoroutineResult), loCoroutineResult);
+
+        //<< Avisamos a la pantalla de carga que debe ocultarse.
+        GameManager.Send(GameCommand.HideUIDownloading);
+
+        //<< Avisamos que debemos ir al menu principal.
+        GameManager.Send(GameCommand.ShowUIMainMenu);
     }
 
     /// <summary>
-    /// Nos indica si debemos o no reiniciar la descarga del catalogo de los addressables.
+    /// Corre un loop while controlado por un modal en caso de errores.
     /// </summary>
-    /// <param name="lbRetry"></param>
-    private void RestartDownloadCatalog(bool lbRetry)
+    /// <param name="loCoroutine"></param>
+    /// <param name="loCoroutineResult"></param>
+    /// <returns></returns>
+    private static IEnumerator RunManagedWhile(IEnumerator loCoroutine, CoroutineResultStruct<bool> loCoroutineResult)
     {
-        if (lbRetry) StartCoroutine(DownloadCatalog());
-        else Application.Quit();
+        while (true)
+        {
+            //<< Avisamos a la pantalla de descarga que debe mostrarse.
+            GameManager.Send(GameCommand.ShowUIDownloading);
+
+            //<< Procesamos la coroutine que nos indican.
+            yield return loCoroutine;
+
+            //<< Si se logra correctamente salimos.
+            if (loCoroutineResult.Result) yield break;
+
+            //<< Si hubo error lo indicamos en el modal.
+            GameManager.Send(GameCommand.HideUIDownloading);
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, null, loCoroutineResult);
+
+            //<< Esperamos respuesta en el modal atraves del objeto de resultado.
+            while (!loCoroutineResult.Completed) yield return null;
+
+            //<< Si nos indican que reintentemos...
+            if (loCoroutineResult.Result) continue;
+
+            //<< Ya que nos indican que no desean reintentar entonces salimos de la app por que los datos de esta sección son indispensables para continuar.
+            Application.Quit();
+            yield break;
+        }
     }
 
     /// <summary>
-    /// Nos indica si debemos o no reiniciar la descarga de los Addressables.
+    /// Obtenemos el tamaño de descarga de todo lo descargable.
     /// </summary>
-    /// <param name="lbRetry"></param>
-    private void RestartDownloadAddressables(bool lbRetry)
+    /// <returns></returns>
+    private static IEnumerator GetDownloadSize(string lcKey, CoroutineResultStruct<bool> loCoroutineResult, CoroutineResultStruct<long> loResult)
     {
-        if (lbRetry) StartCoroutine(DownloadAddressables());
-        else Application.Quit();
+        //<< Obtenemos el tamaño de descarga.
+        AsyncOperationHandle<long> loDownloadSizeHandle = Addressables.GetDownloadSizeAsync(lcKey);
+        yield return loDownloadSizeHandle;
+
+        //<< Revisamos si se logró obtener el tamaño de descarga.
+        if (loDownloadSizeHandle.Status == AsyncOperationStatus.Failed)
+        {
+            Addressables.Release(loDownloadSizeHandle);
+            loCoroutineResult.SetResult(false);
+            yield break;
+        }
+
+        //<< Obtenemos el tamaño de descarga.
+        loResult.SetResult(loDownloadSizeHandle.Result);
+
+        //<< Liberamos el tamaño porque ya tenemos el tamaño.
+        Addressables.Release(loDownloadSizeHandle);
+        loCoroutineResult.SetResult(true);
+        yield break;
     }
 
     /// <summary>
-    /// Nos indica si debemos o no reiniciar la carga de las gameTextures2D.
+    /// Corrutina generica para descargar Addressables.
     /// </summary>
-    /// <param name="lbRetry"></param>
-    private void RestartLoadGameTextures2D(bool lbRetry)
+    /// <param name="lcKey"></param>
+    /// <param name="loOnFail"></param>
+    /// <param name="loNext"></param>
+    /// <returns></returns>
+    private IEnumerator DownloadAddressables(string lcKey, CoroutineResultStruct<bool> loCoroutineResult)
     {
-        if (lbRetry) StartCoroutine(LoadGameTextures2D());
-        else Application.Quit();
+        //<< Avisamos a la pantalla de carga que debe mostrarse.
+        GameManager.Send(GameCommand.SetUIDownloadingPercent, 0);
+
+        //<< Iniciamos la descarga.
+        AsyncOperationHandle loDownloadDependenciesHandle = Addressables.DownloadDependenciesAsync(lcKey, false);
+
+        //<< Actualizamos el porcentaje en la UIDownloading.
+        while (!loDownloadDependenciesHandle.IsDone)
+        {
+            GameManager.Send(GameCommand.SetUIDownloadingPercent, loDownloadDependenciesHandle.PercentComplete);
+            yield return null;
+        }
+
+        if (loDownloadDependenciesHandle.Status != AsyncOperationStatus.Succeeded)
+        {
+            Addressables.Release(loDownloadDependenciesHandle);
+            loCoroutineResult.SetResult(false);
+            yield break;
+        }
+
+        Addressables.Release(loDownloadDependenciesHandle);
+
+        loCoroutineResult.SetResult(true);
+        yield break;
     }
 
     /// <summary>
     /// Es para inicializar los Addressables.
     /// </summary>
     /// <returns></returns>
-    private IEnumerator InitializeAddressables()
+    private IEnumerator InitializeAddressables(CoroutineResultStruct<bool> loCoroutineResult)
     {
-        //<< Avisamos a la pantalla de descarga que debe mostrarse.
-        GameManager.Send(GameCommand.ShowUIDownloading);
-
         //<< Inicializamos Addressables
         AsyncOperationHandle loInitHandle = Addressables.InitializeAsync(false);
 
@@ -87,16 +215,13 @@ public partial class GameManager : MonoBehaviour
         if (loInitHandle.Status == AsyncOperationStatus.Failed)
         {
             Addressables.Release(loInitHandle);
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartInitializeAdressables));
+            loCoroutineResult.SetResult(false);
             yield break;
         }
 
         //<< Podemos liberar el handle ya que obtuvimos el resultado.
         Addressables.Release(loInitHandle);
-
-        //<< Ya que inicializamos los Addressables pasamos a obtener el catalogo.
-        yield return DownloadCatalog();
+        loCoroutineResult.SetResult(true);
         yield break;
     }
 
@@ -104,20 +229,16 @@ public partial class GameManager : MonoBehaviour
     /// Se llama para descargar el catalogo.
     /// </summary>
     /// <returns></returns>
-    private IEnumerator DownloadCatalog()
+    private IEnumerator DownloadCatalog(CoroutineResultStruct<bool> loCoroutineResult)
     {
-        //<< Avisamos a la pantalla de carga que debe mostrarse.
-        GameManager.Send(GameCommand.ShowUIDownloading);
-
         //<< Debemos descargar primero el archivo de la versión para saber el apendice de los archivos ".bin" y ".hash".
         CoroutineResult<string> loDownloadVersionFileResult = new CoroutineResult<string>();
         yield return DownloadTextFile(UriVersionFile, loDownloadVersionFileResult);
 
         if (!loDownloadVersionFileResult.Completed)
         {
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartDownloadCatalog));
             Debug.Log($"Error al descargar el archivo de version. Error: {loDownloadVersionFileResult.Object}");
+            loCoroutineResult.SetResult(false);
             yield break;
         }
 
@@ -135,47 +256,12 @@ public partial class GameManager : MonoBehaviour
         if (goCatalogHandle.Status == AsyncOperationStatus.Failed)
         {
             Addressables.Release(goCatalogHandle);
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartDownloadCatalog));
+            loCoroutineResult.SetResult(false);
             yield break;
         }
 
-        //<< Intentamos la descarga de los elementos.
-        yield return DownloadAddressables();
-        yield break;
-    }
-
-    /// <summary>
-    /// Corrutina de descarga de todos los Addressables.
-    /// </summary>
-    /// <returns></returns>
-    private IEnumerator DownloadAddressables()
-    {
-        //<< Avisamos a la pantalla de carga que debe mostrarse.
-        GameManager.Send(GameCommand.ShowUIDownloading);
-
-        //<< Iniciamos la descarga.
-        AsyncOperationHandle loDownloadDependenciesHandle = Addressables.DownloadDependenciesAsync("default", false);
-
-        //<< Actualizamos el porcentaje en la UIDownloading.
-        while (!loDownloadDependenciesHandle.IsDone)
-        {
-            GameManager.Send(GameCommand.SetUIDownloadingPercent, loDownloadDependenciesHandle.PercentComplete);
-            yield return null;
-        }
-
-        if (loDownloadDependenciesHandle.Status != AsyncOperationStatus.Succeeded)
-        {
-            Addressables.Release(loDownloadDependenciesHandle);
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartDownloadAddressables));
-            yield break;
-        }
-
-        Addressables.Release(loDownloadDependenciesHandle);
-
-        //<< Cargamos las texturas 2D.
-        yield return LoadGameTextures2D();
+        //<< Intentamos la descarga los shaders compartidos.
+        loCoroutineResult.SetResult(true);
         yield break;
     }
 
@@ -183,24 +269,23 @@ public partial class GameManager : MonoBehaviour
     /// Carga de Textures2D.
     /// </summary>
     /// <returns></returns>
-    private IEnumerator LoadGameTextures2D()
+    private IEnumerator LoadGameTextures2D(CoroutineResultStruct<bool> loCoroutineResult)
     {
         //<< Obtenemos las locaciones de las texturas.
         string[] loKeys = new string[] { nameof(GameTexture2D) };
         AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Intersection, typeof(Texture2D));
         yield return loLocationsHandle;
 
-        if(loLocationsHandle.Status == AsyncOperationStatus.Failed)
+        if (loLocationsHandle.Status == AsyncOperationStatus.Failed)
         {
             Addressables.Release(loLocationsHandle);
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartLoadGameTextures2D));
+            loCoroutineResult.SetResult(false);
             yield break;
         }
 
         //<< Obtenemos referencia de las locaciones.
         IList<IResourceLocation> loLocations = loLocationsHandle.Result;
-        
+
         //<< Obtenemos las texturas.
         goGameTextures2DHandle = Addressables.LoadAssetsAsync<Texture2D>(nameof(GameTexture2D), callback: null, Addressables.MergeMode.Union);
 
@@ -211,8 +296,7 @@ public partial class GameManager : MonoBehaviour
         {
             Addressables.Release(loLocationsHandle);
             Addressables.Release(goGameTextures2DHandle);
-            GameManager.Send(GameCommand.HideUIDownloading);
-            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, new UnityAction<bool>(RestartLoadGameTextures2D));
+            loCoroutineResult.SetResult(false);
             yield break;
         }
 
@@ -246,11 +330,158 @@ public partial class GameManager : MonoBehaviour
         //<< Liberamos handle de las locaciones.
         Addressables.Release(loLocationsHandle);
 
-        //<< Avisamos a la pantalla de carga que debe ocultarse.
-        GameManager.Send(GameCommand.HideUIDownloading);
+        loCoroutineResult.SetResult(true);
+        yield break;
+    }
 
-        //<< Avisamos que debemos ir al menu principal.
-        GameManager.Send(GameCommand.ShowUIMainMenu);
+    /// <summary>
+    /// Carga de los "UnitAssetBundles" para obtener las UnitInstances.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator LoadUnitAssetBundles_UnitInstance(CoroutineResultStruct<bool> loCoroutineResult)
+    {
+        //<< Obtenemos las locaciones de las texturas.
+        string[] loKeys = new string[] { nameof(UnitInstance) };
+        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Intersection, typeof(UnitInstance));
+        yield return loLocationsHandle;
+
+        if (loLocationsHandle.Status == AsyncOperationStatus.Failed)
+        {
+            Addressables.Release(loLocationsHandle);
+            loCoroutineResult.SetResult(false);
+            yield break;
+        }
+
+        //<< Obtenemos referencia de las locaciones.
+        IList<IResourceLocation> loLocations = loLocationsHandle.Result;
+
+        //<< Obtenemos las texturas.
+        goUnitInstancesHandle = Addressables.LoadAssetsAsync<UnitInstance>(nameof(UnitInstance), callback: null, Addressables.MergeMode.Union);
+
+        yield return goUnitInstancesHandle;
+
+        //<< Si no se logró reintentamos.
+        if (goUnitInstancesHandle.Status != AsyncOperationStatus.Succeeded)
+        {
+            Addressables.Release(loLocationsHandle);
+            Addressables.Release(goUnitInstancesHandle);
+            loCoroutineResult.SetResult(false);
+            yield break;
+        }
+
+        //<< Las locaciones y UnitInstances estan "emparejados".
+        string[] loSplitString;
+        int lnUnitAssetBundleId;
+        byte lnUnitAssetBundleType;
+        byte lnUnitFaction;
+        int lnUnitRole;
+        string lcAttachTransformName;
+        int lnCount = loLocations.Count;
+        for (int i = 0; i < lnCount; i++)
+        {
+            loSplitString = loLocations[i].PrimaryKey.Split("_");
+            if (loSplitString.Length < 5) continue;
+
+            //<< Obtenemos los datos del UnitAssetBundle.
+            if (!int.TryParse(loSplitString[0], out lnUnitAssetBundleId)) continue;
+            if (!byte.TryParse(loSplitString[1], out lnUnitAssetBundleType)) continue;
+            if (!byte.TryParse(loSplitString[2], out lnUnitFaction)) continue;
+            if (!int.TryParse(loSplitString[3], out lnUnitRole)) continue;
+            lcAttachTransformName = loSplitString[4];
+            if (lcAttachTransformName == "@@@@") lcAttachTransformName = string.Empty;
+
+            //<< Creamos el AssetBundle.
+            UnitAssetBundle loUnitAssetBundle = new UnitAssetBundle();
+            loUnitAssetBundle.Type = (UnitAssetBundleType)lnUnitAssetBundleType;
+            loUnitAssetBundle.Faction = (UnitFaction)lnUnitFaction;
+            loUnitAssetBundle.Role = (UnitRole)lnUnitRole;
+            loUnitAssetBundle.AttachTransformName = lcAttachTransformName;
+            loUnitAssetBundle.unitInstance = goUnitInstancesHandle.Result[i];
+
+            //<< Agregamos el UnitInstance al asset bundle de id dado.
+            goUnitAssetBundles.Add(lnUnitAssetBundleId, loUnitAssetBundle);
+        }
+
+        //<< Liberamos handle de las locaciones.
+        Addressables.Release(loLocationsHandle);
+
+        loCoroutineResult.SetResult(true);
+        yield break;
+    }
+
+    /// <summary>
+    /// Carga de los "UnitAssetBundles" solo para los unitElements.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator LoadUnitAssetBundles_UnitElement(CoroutineResultStruct<bool> loCoroutineResult)
+    {
+        //<< Obtenemos las locaciones de las texturas.
+        string[] loKeys = new string[] { nameof(UnitElement) };
+        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Intersection, typeof(UnitElement));
+        yield return loLocationsHandle;
+
+        if (loLocationsHandle.Status == AsyncOperationStatus.Failed)
+        {
+            Addressables.Release(loLocationsHandle);
+            loCoroutineResult.SetResult(false);
+            yield break;
+        }
+
+        //<< Obtenemos referencia de las locaciones.
+        IList<IResourceLocation> loLocations = loLocationsHandle.Result;
+
+        //<< Obtenemos las texturas.
+        goUnitElementsHandle = Addressables.LoadAssetsAsync<UnitElement>(nameof(UnitElement), callback: null, Addressables.MergeMode.Union);
+
+        yield return goUnitElementsHandle;
+
+        //<< Si no se logró reintentamos.
+        if (goUnitElementsHandle.Status != AsyncOperationStatus.Succeeded)
+        {
+            Addressables.Release(loLocationsHandle);
+            Addressables.Release(goUnitElementsHandle);
+            loCoroutineResult.SetResult(false);
+            yield break;
+        }
+
+        //<< Las locaciones y UnitElements estan "emparejados".
+        string[] loSplitString;
+        int lnUnitAssetBundleId;
+        byte lnUnitAssetBundleType;
+        byte lnUnitFaction;
+        int lnUnitRole;
+        string lcAttachTransformName;
+        int lnCount = loLocations.Count;
+        for (int i = 0; i < lnCount; i++)
+        {
+            loSplitString = loLocations[i].PrimaryKey.Split("_");
+            if (loSplitString.Length < 5) continue;
+
+            //<< Obtenemos los datos del UnitAssetBundle.
+            if (!int.TryParse(loSplitString[0], out lnUnitAssetBundleId)) continue;
+            if (!byte.TryParse(loSplitString[1], out lnUnitAssetBundleType)) continue;
+            if (!byte.TryParse(loSplitString[2], out lnUnitFaction)) continue;
+            if (!int.TryParse(loSplitString[3], out lnUnitRole)) continue;
+            lcAttachTransformName = loSplitString[4];
+            if (lcAttachTransformName == "@@@@") lcAttachTransformName = string.Empty;
+
+            //<< Creamos el AssetBundle.
+            UnitAssetBundle loUnitAssetBundle = new UnitAssetBundle();
+            loUnitAssetBundle.Type = (UnitAssetBundleType)lnUnitAssetBundleType;
+            loUnitAssetBundle.Faction = (UnitFaction)lnUnitFaction;
+            loUnitAssetBundle.Role = (UnitRole)lnUnitRole;
+            loUnitAssetBundle.AttachTransformName = lcAttachTransformName;
+            loUnitAssetBundle.unitElement = goUnitElementsHandle.Result[i];
+
+            //<< Agregamos el UnitInstance al asset bundle de id dado.
+            goUnitAssetBundles.Add(lnUnitAssetBundleId, loUnitAssetBundle);
+        }
+
+        //<< Liberamos handle de las locaciones.
+        Addressables.Release(loLocationsHandle);
+
+        loCoroutineResult.SetResult(true);
+        yield break;
     }
 
     /// <summary>
@@ -259,6 +490,8 @@ public partial class GameManager : MonoBehaviour
     private void OnDestroyAddressables()
     {
         if (goGameTextures2DHandle.IsValid()) Addressables.Release(goGameTextures2DHandle);
+        if (goUnitInstancesHandle.IsValid()) Addressables.Release(goUnitInstancesHandle);
+        if (goUnitElementsHandle.IsValid()) Addressables.Release(goUnitElementsHandle);
         if (goCatalogHandle.IsValid()) Addressables.Release(goCatalogHandle);
     }
 }

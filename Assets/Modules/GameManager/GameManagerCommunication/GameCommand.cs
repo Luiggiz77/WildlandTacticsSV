@@ -398,7 +398,8 @@ public enum GameCommand : int
     /// param[0] = string lcText - Es el texto a mostrar en el modal.
     /// param[1] = string lcTextButtonOk - Es el texto a mostrar en el boton de Ok.
     /// param[2] = string lcTextButtonCancel - Es el texto a mostrar en el boton de Cancel. Nota: Si es null o empty no se muestra el botón de cancelar.
-    /// param[3] = UnityAction<bool> loCallback - Evento para indicar si le dieron click a Ok (true) o Cancel (false).
+    /// param[3] = UnityAction<bool> loCallback - Evento para indicar si le dieron click a Ok (true) o Cancel (false). (Opcional)
+    /// param[4] = CoroutineResultStruct<bool> loObjectCallback - Objeto para indicar si le dieron click a Ok (true) o Cancel (false). (Opcional)
     /// </summary>
     ShowUIModal,
 

@@ -22,6 +22,11 @@ public class UIModal : UIView
     private UnityAction<bool> goOnClick = null;
 
     /// <summary>
+    /// Objeto que se llama cuando le dan click al boton "Ok" (true) o "Cancel" (false).
+    /// </summary>
+    private CoroutineResultStruct<bool> goResult = null;
+
+    /// <summary>
     /// Awake
     /// </summary>
     protected override void Awake()
@@ -52,7 +57,9 @@ public class UIModal : UIView
                 textButtonOk.text = (string)loParams[1];
                 textButtonCancel.text = (string)loParams[2];
                 buttonCancel.SetActive(!string.IsNullOrWhiteSpace(textButtonCancel.text));
-                goOnClick = (UnityAction<bool>)loParams[3];
+                goOnClick = loParams.Length > 2 ? (UnityAction<bool>)loParams[3] : null;
+                goResult = loParams.Length > 3 ? (CoroutineResultStruct<bool>)loParams[4] : null;
+                if (goResult != null) goResult.Reset();
                 panel.SetActive(true);
                 break;
             default: break;
@@ -65,6 +72,7 @@ public class UIModal : UIView
     public void OnClickOk()
     {
         goOnClick?.Invoke(true);
+        if (goResult != null) goResult.SetResult(true);
     }
 
     /// <summary>
@@ -73,5 +81,6 @@ public class UIModal : UIView
     public void OnClickCancel()
     {
         goOnClick?.Invoke(false);
+        if (goResult != null) goResult.SetResult(false);
     }
 }

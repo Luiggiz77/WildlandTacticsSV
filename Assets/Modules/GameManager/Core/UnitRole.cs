@@ -1,4 +1,4 @@
-public enum UnitRole
+public enum UnitRole : int
 {
     /// <summary>
     /// Cualquiera
