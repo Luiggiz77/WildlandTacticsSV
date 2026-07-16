@@ -20,11 +20,6 @@ public partial class GameManager : MonoBehaviour
     private static Uri UriWebsite = null;
 
     /// <summary>
-    /// Url para descargar el archivo "version.txt" para adressables.
-    /// </summary>
-    private static Uri UriVersionFile = null;
-
-    /// <summary>
     /// Url para hacer login.
     /// </summary>
     private static Uri UriLogin = null;
@@ -110,7 +105,6 @@ public partial class GameManager : MonoBehaviour
         UriLanguage = new Uri(UriWebsite, "language");
         UriUnitsProperties = new Uri(UriWebsite, "UnitsProperties");
         UriUnitsBattleProperties = new Uri(UriWebsite, "UnitsBattleProperties");
-        UriVersionFile = new Uri(UriWebsite, $"{GetPlatformPath()}/version.txt?rand={UnityEngine.Random.Range(0, int.MaxValue)}");
         UriBoardConstants = new Uri(UriWebsite, "BoardConstants");
         UriDistributionBoards = new Uri(UriWebsite, "DistributionBoards");
         UriDistributionBoardsUnitCoordinates = new Uri(UriWebsite, "DistributionBoardsUnitCoordinates");

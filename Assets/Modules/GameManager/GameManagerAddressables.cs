@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,7 +20,7 @@ public partial class GameManager : MonoBehaviour
         /// <summary>
         /// Llave para descargar los shared shaders.
         /// </summary>
-        public const string SharedShaders = "shared_shaders";
+        public const string SharedShaders = "sharedshaders";
     }
 
     /// <summary>
@@ -70,21 +71,29 @@ public partial class GameManager : MonoBehaviour
         //<< Obtenemos el catalogo.
         yield return RunManagedWhile(DownloadCatalog(loCoroutineResult), loCoroutineResult);
 
-        //<< Obtenemos el tamaño de descarga de los Shared Shaders.
-        yield return RunManagedWhile(GetDownloadSize(AddressableLabel.SharedShaders, loCoroutineResult, loCoroutineResultSize), loCoroutineResult);
+        foreach (var locator in UnityEngine.AddressableAssets.Addressables.ResourceLocators)
+        {
+            Debug.Log($"--- Examinando localizador: {locator.LocatorId} ---");
 
-        //<< FINDME Aqui debemos indicarle el tamaño a la pantalla de Descarga. (Shared_Shaders)
+            // Recorremos todas las llaves registradas
+            foreach (var key in locator.Keys)
+            {
+                // Filtramos para no mostrar datos internos pesados (como GUIDs o tipos si no quieres)
+                // Pero para buscar errores de dedo, lo mejor es verlas todas:
+                Debug.Log($"Llave encontrada: '{key}'");
+            }
+        }
 
-        //<< Obtenemos los Shared Shaders.
-        yield return RunManagedWhile(DownloadAddressables(AddressableLabel.SharedShaders, loCoroutineResult), loCoroutineResult);
-
-        //<< Obtenemos el tamaño de descarga de los elementos default.
+        //<< Obtenemos el tamaño de descarga de todos los elementos default.
         yield return RunManagedWhile(GetDownloadSize(AddressableLabel.Default, loCoroutineResult, loCoroutineResultSize), loCoroutineResult);
 
         //<< FINDME Aqui debemos indicarle el tamaño a la pantalla de Descarga. (Default)
+        Debug.Log($"Tamaño de descarga elementos default: {loCoroutineResultSize.Result} KB");
 
         //<< Obtenemos elementos default.
         yield return RunManagedWhile(DownloadAddressables(AddressableLabel.Default, loCoroutineResult), loCoroutineResult);
+
+        //<< Cargamos los shader.
 
         //<< Cargamos las Texture2D en memoria.
         yield return RunManagedWhile(LoadGameTextures2D(loCoroutineResult), loCoroutineResult);
@@ -174,7 +183,7 @@ public partial class GameManager : MonoBehaviour
     private IEnumerator DownloadAddressables(string lcKey, CoroutineResultStruct<bool> loCoroutineResult)
     {
         //<< Avisamos a la pantalla de carga que debe mostrarse.
-        GameManager.Send(GameCommand.SetUIDownloadingPercent, 0);
+        GameManager.Send(GameCommand.SetUIDownloadingPercent, 0.0f);
 
         //<< Iniciamos la descarga.
         AsyncOperationHandle loDownloadDependenciesHandle = Addressables.DownloadDependenciesAsync(lcKey, false);
@@ -231,19 +240,8 @@ public partial class GameManager : MonoBehaviour
     /// <returns></returns>
     private IEnumerator DownloadCatalog(CoroutineResultStruct<bool> loCoroutineResult)
     {
-        //<< Debemos descargar primero el archivo de la versión para saber el apendice de los archivos ".bin" y ".hash".
-        CoroutineResult<string> loDownloadVersionFileResult = new CoroutineResult<string>();
-        yield return DownloadTextFile(UriVersionFile, loDownloadVersionFileResult);
-
-        if (!loDownloadVersionFileResult.Completed)
-        {
-            Debug.Log($"Error al descargar el archivo de version. Error: {loDownloadVersionFileResult.Object}");
-            loCoroutineResult.SetResult(false);
-            yield break;
-        }
-
         //<< Generamos la direccion del catalogo de addressables.
-        string lcCatalogURL = $"{WebsiteURL}{GetPlatformPath()}/catalog_{loDownloadVersionFileResult.Object}.bin";
+        string lcCatalogURL = $"{WebsiteURL}{GetPlatformPath()}/catalog_WLT.bin";
 
         //<< Indicamos que no se busque en StreamingAssets si no que use la URL como base.
         AddressablesRuntimeProperties.SetPropertyValue("RemoteCatalogProvider", lcCatalogURL);
@@ -356,7 +354,7 @@ public partial class GameManager : MonoBehaviour
         IList<IResourceLocation> loLocations = loLocationsHandle.Result;
 
         //<< Obtenemos las texturas.
-        goUnitInstancesHandle = Addressables.LoadAssetsAsync<UnitInstance>(nameof(UnitInstance), callback: null, Addressables.MergeMode.Union);
+        goUnitInstancesHandle = Addressables.LoadAssetsAsync<UnitInstance>(loLocations, null);
 
         yield return goUnitInstancesHandle;
 
@@ -431,7 +429,7 @@ public partial class GameManager : MonoBehaviour
         IList<IResourceLocation> loLocations = loLocationsHandle.Result;
 
         //<< Obtenemos las texturas.
-        goUnitElementsHandle = Addressables.LoadAssetsAsync<UnitElement>(nameof(UnitElement), callback: null, Addressables.MergeMode.Union);
+        goUnitElementsHandle = Addressables.LoadAssetsAsync<UnitElement>(loLocations, null);
 
         yield return goUnitElementsHandle;
 
