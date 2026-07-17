@@ -5,9 +5,8 @@ public enum GameCommand : int
 {
     /// <summary>
     /// Se llama para obtener el inventario del oponente.
-    /// param[0] = bool lbOpponent - Bandera que nos indica de quien es el inventario si es del usuario o del oponente. True indica que es inventario del oponente.
-    /// param[1] = GameplayItemTiming? loTiming - Nos indica de que momento se usan los items, por ende cualquier item con este momento será regresado en el callback. Nota: Si es null manda todo, de lo contrario lo manda filtrado.
-    /// param[2] = UnityAction<IEnumerable<GameplayItemStored>> loCallback - Callback que da el inventario requerido.
+    /// param[0] = GameplayItemTiming? loTiming - Nos indica de que momento se usan los items, por ende cualquier item con este momento será regresado en el callback. Nota: Si es null manda todo, de lo contrario lo manda filtrado.
+    /// param[1] = UnityAction<IEnumerable<GameplayItemStored>> loCallback - Callback que da el inventario requerido.
     /// </summary>
     GetGameplayItemsStored,
 
@@ -179,6 +178,12 @@ public enum GameCommand : int
     /// param[0] = UnityAction<IEnumerable<DistributionBoard>> RetieveDistributionBoards - Callback que da los tableros de distribucion almacenados.
     /// </summary>
     GetDistributionBoards,
+
+    /// <summary>
+    /// Da el tablero de distribución del oponente.
+    /// param[0] = UnityAction<DistributionBoard> RetieveDistributionBoardOpponent - Callback que da el tablero de distribucion del oponente.
+    /// </summary>
+    GetDistributionBoardOpponent,
 
     /// <summary>
     /// Nos da las propiedades de una unidad.

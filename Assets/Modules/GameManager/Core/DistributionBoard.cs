@@ -17,7 +17,7 @@ public class DistributionBoard
     /// <summary>
     /// Largo de nuestro tablero.
     /// </summary>
-    private int gnLenght = 0;
+    private int gnLength = 0;
 
     /// <summary>
     /// Nuestro tablero de distribución de unidades, 0 indica que no hay nada y un numero indica el id de la unidad.
@@ -28,11 +28,11 @@ public class DistributionBoard
     /// Se llama para configurar
     /// </summary>
     /// <param name="lnWidth"></param>
-    /// <param name="lnLenght"></param>
-    public void Setup(int lnWidth, int lnLenght)
+    /// <param name="lnLength"></param>
+    public void Setup(int lnWidth, int lnLength)
     {
-        gnLenght = lnLenght;
-        goBoard = new int[lnWidth * lnLenght];
+        gnLength = lnLength;
+        goBoard = new int[lnWidth * lnLength];
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public class DistributionBoard
     /// <returns></returns>
     private int IndexOf(int lnX, int lnZ)
     {
-        return (lnX * gnLenght) + lnZ;
+        return (lnX * gnLength) + lnZ;
     }
 
     /// <summary>
@@ -66,8 +66,8 @@ public class DistributionBoard
     /// <param name="lnZ"></param>
     private void CoordinatesOf(int lnIndex, out int lnX, out int lnZ)
     {
-        lnX = UnityEngine.Mathf.FloorToInt((float)lnIndex / gnLenght);
-        lnZ = lnIndex - (gnLenght * lnX);
+        lnX = UnityEngine.Mathf.FloorToInt((float)lnIndex / gnLength);
+        lnZ = lnIndex - (gnLength * lnX);
     }
 
     /// <summary>

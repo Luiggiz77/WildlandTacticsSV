@@ -64,12 +64,12 @@ public class UICamp : UIView
     /// <summary>
     /// Ancho del tablero de distribución (cuadrantes).
     /// </summary>
-    private int gnDistributionBoardWidht = 6;
+    private int gnDistributionBoardWidth = 6;
 
     /// <summary>
     /// Largo del tablero de distribución (cuadrantes).
     /// </summary>
-    private int gnDistributionBoardLenght = 7;
+    private int gnDistributionBoardLength = 7;
 
     /// <summary>
     /// Para pedir las instancias al momento de cambiar las unidades de posicion.
@@ -224,13 +224,13 @@ public class UICamp : UIView
     /// Callback para recibir las dimensiones del tablero de distribución.
     /// </summary>
     /// <param name="loBoardProperties"></param>
-    private void OnGetDistributionBoardDimensions(int lnWidht, int lnLenght)
+    private void OnGetDistributionBoardDimensions(int lnWidth, int lnLength)
     {
-        gnDistributionBoardWidht = lnWidht;
-        gnDistributionBoardLenght = lnLenght;
+        gnDistributionBoardWidth = lnWidth;
+        gnDistributionBoardLength = lnLength;
 
         //<< Obtenemos el tamaño del array con base en el tamaño del tablero de distribución.
-        int lnSize = gnDistributionBoardWidht * gnDistributionBoardLenght;
+        int lnSize = gnDistributionBoardWidth * gnDistributionBoardLength;
 
         //<< Revisamos si tenemos que cambiar el tamaño del tablero.
         if (goUIDistributionBoardCells != null && goUIDistributionBoardCells.Length == lnSize) return;
@@ -251,7 +251,7 @@ public class UICamp : UIView
         loUIDistributionBoard = prefabUIDistributionBoardUser;
         loPrefabUIDistributionBoardCell = prefabUIDistributionBoardCellUser;
 
-        SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoards.transform, panelScrollRectDistributionBoards, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidht, gnDistributionBoardLenght, distributionBoardSettings, loUIDistributionBoard, loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out _, out _);
+        SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoards.transform, panelScrollRectDistributionBoards, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidth, gnDistributionBoardLength, distributionBoardSettings, loUIDistributionBoard, loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out _, out _);
 
         //<< Determinamos el padding superior e inferior que debe tener el horizontallayoutgroup
         int lnPadding = Mathf.FloorToInt(goDistributionBoardsParentSize.x - loDistributionBoardSize.x);
@@ -280,7 +280,7 @@ public class UICamp : UIView
     /// <param name="loPrefabUIDistributionBoard"></param>
     /// <param name="loPrefabUIDistributionBoardCell"></param>
     /// <returns>El ancho y alto del tablero de distribución.</returns>
-    internal static void SetupDistributionBoards(IEnumerable<DistributionBoard> loDistributionBoards, Transform loUIDistributionBoardsParent, ScrollRect loUIDistributionBoardsScrollRect, float lnDistributionBoardWidth, float lnDistributionBoardHeight, int lnBoardWidth, int lnBoardLenght, UIDistributionBoardSettings loUIDistributionBoardSettings, UIDistributionBoard loPrefabUIDistributionBoard, UIDistributionBoardCell loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out float lnCellSize, out float lnPaddingTop)
+    internal static void SetupDistributionBoards(IEnumerable<DistributionBoard> loDistributionBoards, Transform loUIDistributionBoardsParent, ScrollRect loUIDistributionBoardsScrollRect, float lnDistributionBoardWidth, float lnDistributionBoardHeight, int lnBoardWidth, int lnBoardLength, UIDistributionBoardSettings loUIDistributionBoardSettings, UIDistributionBoard loPrefabUIDistributionBoard, UIDistributionBoardCell loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out float lnCellSize, out float lnPaddingTop)
     {
         int lnHashCodeDistributionBoard = loPrefabUIDistributionBoard.GetHashCode();
         int lnHashCodeDistributionBoardCell = loPrefabUIDistributionBoardCell.GetHashCode();
@@ -298,7 +298,7 @@ public class UICamp : UIView
         //<< Determinamos la altura del rect del nombre del tablero de distribución.
         float lnDistributionBoardNameHeight = loUIDistributionBoardSettings.nameHeight * (lnDistributionBoardHeight - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness);
 
-        float lnCellWidth = (lnDistributionBoardWidth - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness) / lnBoardLenght;
+        float lnCellWidth = (lnDistributionBoardWidth - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness) / lnBoardLength;
         float lnCellHeight = (lnDistributionBoardHeight - lnDistributionBoardNameHeight - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness) / lnBoardWidth;
 
         //<< Usamos el tamaño de celda mas pequeña.
@@ -310,7 +310,7 @@ public class UICamp : UIView
         else
         {
             lnCellSize = lnCellHeight;
-            lnDistributionBoardWidth = lnCellSize * lnBoardLenght;
+            lnDistributionBoardWidth = lnCellSize * lnBoardLength;
         }
 
         //lnCellSize -= 30f;
@@ -333,7 +333,7 @@ public class UICamp : UIView
             loUIDistributionBoard.distributionBoardName.rectTransform.SetRight(lnDistributionBoardBorderThickness);
 
             //<< Indicamos la cantidad de columnas que debe tener el grid.
-            loUIDistributionBoard.gridLayoutGroup.constraintCount = lnBoardLenght;
+            loUIDistributionBoard.gridLayoutGroup.constraintCount = lnBoardLength;
 
             //<< Asignamos el id del tablero de distribución.
             loUIDistributionBoard.gnDistributionBoardId = loDistributionBoard.Id;
@@ -361,7 +361,7 @@ public class UICamp : UIView
             //<< Instanciamos tantos espacios como sean necesarios. Nota: Es X y Y ya que el tablero de distribución lo vemos de manera lateral.
             for (int x = 0; x < lnBoardWidth; x++)
             {
-                for (int z = 0; z < lnBoardLenght; z++)
+                for (int z = 0; z < lnBoardLength; z++)
                 {
                     //<< Determinamos si hay una unidad en este espacio del mapa de distribucion de unidades.
                     int lnUnitPropertiesId = loDistributionBoard.GetIdOf(x, z);
@@ -379,6 +379,113 @@ public class UICamp : UIView
                     loUIDistributionBoardCell.SetActionAllowingScrollRect(null);
                     loUIDistributionBoardCell.name = $"{loDistributionBoard.Id}_{x}_{z}";
                 }
+            }
+        }
+
+        //<< Obtenemos las dimensiones del tablero.
+        loDistributionBoardSize = new Vector2(lnDistributionBoardWidth, lnDistributionBoardHeight);
+
+        //<< Obtenemos el padding de la parte superior.
+        lnPaddingTop = lnDistributionBoardNameHeight + lnDistributionBoardBorderThickness;
+    }
+
+
+
+    internal static void SetupDistributionBoard(DistributionBoard loDistributionBoard, Transform loUIDistributionBoardsParent, ScrollRect loUIDistributionBoardsScrollRect, float lnDistributionBoardWidth, float lnDistributionBoardHeight, int lnBoardWidth, int lnBoardLength, UIDistributionBoardSettings loUIDistributionBoardSettings, UIDistributionBoard loPrefabUIDistributionBoard, UIDistributionBoardCell loPrefabUIDistributionBoardCell, out Vector3 loDistributionBoardSize, out float lnCellSize, out float lnPaddingTop)
+    {
+        int lnHashCodeDistributionBoard = loPrefabUIDistributionBoard.GetHashCode();
+        int lnHashCodeDistributionBoardCell = loPrefabUIDistributionBoardCell.GetHashCode();
+
+        //<< Desactivamos todos los elementos previos instanciados.
+        GameManager.DeactivateSpawns(lnHashCodeDistributionBoard);
+        GameManager.DeactivateSpawns(lnHashCodeDistributionBoardCell);
+
+        //<< Obtenemos el tamaño de los bordes.
+        int lnDistributionBoardBorderThickness;
+
+        if (lnDistributionBoardHeight < lnDistributionBoardWidth) lnDistributionBoardBorderThickness = Mathf.FloorToInt(loUIDistributionBoardSettings.borderThickness * lnDistributionBoardHeight * 0.5f);
+        else lnDistributionBoardBorderThickness = Mathf.FloorToInt(loUIDistributionBoardSettings.borderThickness * lnDistributionBoardWidth * 0.5f);
+
+        //<< Determinamos la altura del rect del nombre del tablero de distribución.
+        float lnDistributionBoardNameHeight = loUIDistributionBoardSettings.nameHeight * (lnDistributionBoardHeight - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness);
+
+        float lnCellWidth = (lnDistributionBoardWidth - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness) / lnBoardLength;
+        float lnCellHeight = (lnDistributionBoardHeight - lnDistributionBoardNameHeight - lnDistributionBoardBorderThickness - lnDistributionBoardBorderThickness) / lnBoardWidth;
+
+        //<< Usamos el tamaño de celda mas pequeña.
+        if (lnCellWidth < lnCellHeight)
+        {
+            lnCellSize = lnCellWidth;
+            lnDistributionBoardHeight = lnCellSize * lnBoardWidth;
+        }
+        else
+        {
+            lnCellSize = lnCellHeight;
+            lnDistributionBoardWidth = lnCellSize * lnBoardLength;
+        }
+
+        //lnCellSize -= 30f;
+        Vector2 loCellSize = new Vector2(lnCellSize, lnCellSize);
+
+        //<< Instanciamos el UI del tablero de distribucion para agregar los espacios y asignar las unidades.
+        UIDistributionBoard loUIDistributionBoard = GameManager.Spawn(lnHashCodeDistributionBoard, loPrefabUIDistributionBoard);
+
+        //<< Agregamos el tablero de distribución como contenido.
+        loUIDistributionBoard.transform.SetParent(loUIDistributionBoardsParent, false);
+        loUIDistributionBoard.transform.localScale = Vector3.one;
+
+        //<< Establecemos la altura y posicion del nombre del tablero de distribución con base en los settings.
+        loUIDistributionBoard.distributionBoardName.rectTransform.sizeDelta = new Vector2(loUIDistributionBoard.distributionBoardName.rectTransform.sizeDelta.x, lnDistributionBoardNameHeight);
+        loUIDistributionBoard.distributionBoardName.rectTransform.anchoredPosition = new Vector2(loUIDistributionBoard.distributionBoardName.rectTransform.anchoredPosition.x, -lnDistributionBoardBorderThickness);
+        loUIDistributionBoard.distributionBoardName.rectTransform.SetLeft(lnDistributionBoardBorderThickness);
+        loUIDistributionBoard.distributionBoardName.rectTransform.SetRight(lnDistributionBoardBorderThickness);
+
+        //<< Indicamos la cantidad de columnas que debe tener el grid.
+        loUIDistributionBoard.gridLayoutGroup.constraintCount = lnBoardLength;
+
+        //<< Asignamos el id del tablero de distribución.
+        loUIDistributionBoard.gnDistributionBoardId = loDistributionBoard.Id;
+
+        //<< Asignamos el nombre del tablero de distribución. //<< TEMP VLAD
+        //loUIDistributionBoard.distributionBoardName.text = loDistributionBoard.Name;
+
+        //<< Establecemos la altura del tablero de distribución con base en los settings.
+        loUIDistributionBoard.layoutElement.minHeight = lnDistributionBoardHeight;
+        loUIDistributionBoard.layoutElement.minWidth = lnDistributionBoardWidth;
+
+        //<< Establecemos el tamaño de las celdas.
+        loUIDistributionBoard.gridLayoutGroup.cellSize = loCellSize;
+
+        //<< Establecemos el espacio del nombre del tablero de distribución.
+        loUIDistributionBoard.gridLayoutGroup.padding.top = Mathf.FloorToInt(lnDistributionBoardNameHeight + lnDistributionBoardBorderThickness);
+        loUIDistributionBoard.gridLayoutGroup.padding.left = lnDistributionBoardBorderThickness;
+        loUIDistributionBoard.gridLayoutGroup.padding.right = lnDistributionBoardBorderThickness;
+        loUIDistributionBoard.gridLayoutGroup.padding.bottom = lnDistributionBoardBorderThickness;
+
+        //<< Establecemos el tamaño de los bordes.
+        foreach (LayoutElement loItem in loUIDistributionBoard.horizontalBorders) loItem.minHeight = lnDistributionBoardBorderThickness;
+        foreach (LayoutElement loItem in loUIDistributionBoard.verticalBorders) loItem.minWidth = lnDistributionBoardBorderThickness;
+
+        //<< Instanciamos tantos espacios como sean necesarios. Nota: Es X y Y ya que el tablero de distribución lo vemos de manera lateral.
+        for (int x = 0; x < lnBoardWidth; x++)
+        {
+            for (int z = 0; z < lnBoardLength; z++)
+            {
+                //<< Determinamos si hay una unidad en este espacio del mapa de distribucion de unidades.
+                int lnUnitPropertiesId = loDistributionBoard.GetIdOf(x, z);
+
+                //<< Creamos el cell, emparentamos y configuramos.
+                UIDistributionBoardCell loUIDistributionBoardCell = GameManager.Spawn(lnHashCodeDistributionBoardCell, loPrefabUIDistributionBoardCell);
+                loUIDistributionBoardCell.transform.SetParent(loUIDistributionBoard.gridLayoutGroup.transform, false);
+                loUIDistributionBoardCell.transform.localScale = Vector3.one;
+                loUIDistributionBoardCell.boxCollider2DIcon.size = loCellSize;
+                loUIDistributionBoardCell.boxCollider2DBackground.size = loCellSize;
+                loUIDistributionBoardCell.SetDistributionBoardId(loDistributionBoard.Id);
+                loUIDistributionBoardCell.SetCoordinates(x, z);
+                loUIDistributionBoardCell.SetUnitPropertiesId(lnUnitPropertiesId);
+                loUIDistributionBoardCell.SetScrollRect(loUIDistributionBoardsScrollRect);
+                loUIDistributionBoardCell.SetActionAllowingScrollRect(null);
+                loUIDistributionBoardCell.name = $"{loDistributionBoard.Id}_{x}_{z}";
             }
         }
 
@@ -461,6 +568,7 @@ public class UICamp : UIView
 
     private void UpdateBoardTextName()
     {
+        if (goDistributionBoards.Count == 0) { distributionBoardName.text = string.Empty; return; }
         distributionBoardName.text = goDistributionBoards[gnSelectedDistributionBoardIndex].Name;
     }
 }

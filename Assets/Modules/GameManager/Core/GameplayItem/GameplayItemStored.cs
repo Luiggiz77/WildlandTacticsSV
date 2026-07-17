@@ -13,7 +13,7 @@ public class GameplayItemStored
     /// <summary>
     /// Nos indica cuantas veces se ha usado el objeto.
     /// </summary>
-    public int Uses = 0;
+    private int gnUses = 0;
 
     /// <summary>
     /// Nos indica si el item está seleccionado para ser usado.

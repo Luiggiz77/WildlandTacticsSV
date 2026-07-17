@@ -6,7 +6,7 @@ public class BoardConstants
     /// <summary>
     /// Ancho del tablero.
     /// </summary>
-    public int Widht;
+    public int Width;
 
     /// <summary>
     /// Cantidad maxima de unidades en batalla.
@@ -16,5 +16,5 @@ public class BoardConstants
     /// <summary>
     /// Largo del tablero de distribución.
     /// </summary>
-    public int DistributionBoardLenght;
+    public int DistributionBoardLength;
 }

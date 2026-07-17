@@ -71,18 +71,17 @@ public partial class GameManager : MonoBehaviour
         //<< Obtenemos el catalogo.
         yield return RunManagedWhile(DownloadCatalog(loCoroutineResult), loCoroutineResult);
 
-        foreach (var locator in UnityEngine.AddressableAssets.Addressables.ResourceLocators)
-        {
-            Debug.Log($"--- Examinando localizador: {locator.LocatorId} ---");
-
-            // Recorremos todas las llaves registradas
-            foreach (var key in locator.Keys)
-            {
-                // Filtramos para no mostrar datos internos pesados (como GUIDs o tipos si no quieres)
-                // Pero para buscar errores de dedo, lo mejor es verlas todas:
-                Debug.Log($"Llave encontrada: '{key}'");
-            }
-        }
+        //foreach (var locator in UnityEngine.AddressableAssets.Addressables.ResourceLocators)
+        //{
+        //    Debug.Log($"--- Examinando localizador: {locator.LocatorId} ---");
+        //    // Recorremos todas las llaves registradas
+        //    foreach (var key in locator.Keys)
+        //    {
+        //        // Filtramos para no mostrar datos internos pesados (como GUIDs o tipos si no quieres)
+        //        // Pero para buscar errores de dedo, lo mejor es verlas todas:
+        //        Debug.Log($"Llave encontrada: '{key}'");
+        //    }
+        //}
 
         //<< Obtenemos el tamaño de descarga de todos los elementos default.
         yield return RunManagedWhile(GetDownloadSize(AddressableLabel.Default, loCoroutineResult, loCoroutineResultSize), loCoroutineResult);

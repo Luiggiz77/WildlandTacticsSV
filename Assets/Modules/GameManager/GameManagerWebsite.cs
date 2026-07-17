@@ -40,19 +40,29 @@ public partial class GameManager : MonoBehaviour
     private static Uri UriUnitsBattleProperties = null;
 
     /// <summary>
-    /// Url para obtenes las constantes del tablero.
+    /// Url para obtener las constantes del tablero.
     /// </summary>
     private static Uri UriBoardConstants = null;
 
     /// <summary>
-    /// Url para obtenes los tableros de distribución.
+    /// Url para obtener los tableros de distribución.
     /// </summary>
     private static Uri UriDistributionBoards = null;
 
     /// <summary>
-    /// Url para obtenes las coordenadas de las unidades en los tableros de distribución.
+    /// Url para obtener las coordenadas de las unidades en los tableros de distribución.
     /// </summary>
     private static Uri UriDistributionBoardsUnitCoordinates = null;
+
+    /// <summary>
+    /// Url para obtener todos los items existentes del juego.
+    /// </summary>
+    private static Uri UriGameplayItems = null;
+
+    /// <summary>
+    /// Url para obtener todos los items del jugador.
+    /// </summary>
+    private static Uri UriGameplayItemsStored = null;
 
     /// <summary>
     /// Url para indicar que debemos agregar una unidad al tablero de distribución.
@@ -83,12 +93,22 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Nuestras constantes de tablero.
     /// </summary>
-    private BoardConstants goBoardConstants = new BoardConstants() { DistributionBoardLenght = 3, Widht = 6, MaxUnits = 5, };
+    private BoardConstants goBoardConstants = new BoardConstants() { DistributionBoardLength = 3, Width = 6, MaxUnits = 5, };
 
     /// <summary>
     /// Nuestros tableros de distribución.
     /// </summary>
     private Dictionary<int, DistributionBoard> goDistributionBoards = new Dictionary<int, DistributionBoard>();
+
+    /// <summary>
+    /// Lista de items del juego.
+    /// </summary>
+    private Dictionary<int, GameplayItem> goGameplayItems = new Dictionary<int, GameplayItem>();
+
+    /// <summary>
+    /// Inventario de items del usuario.
+    /// </summary>
+    private IEnumerable<GameplayItemStored> goInventory = Array.Empty<GameplayItemStored>();
 
     /// <summary>
     /// Nos indica el tablero de distribución seleccionado.
@@ -110,6 +130,8 @@ public partial class GameManager : MonoBehaviour
         UriDistributionBoardsUnitCoordinates = new Uri(UriWebsite, "DistributionBoardsUnitCoordinates");
         UriAddUnitToDistributionBoard = new Uri(UriWebsite, "AddUnitToDistributionBoard");
         UriRemoveUnitFromDistributionBoard = new Uri(UriWebsite, "RemoveUnitFromDistributionBoard");
+        UriGameplayItems = new Uri(UriWebsite, "GameplayItems");
+        UriGameplayItemsStored = new Uri(UriWebsite, "GameplayItemsStored");
 
         string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
@@ -140,6 +162,12 @@ public partial class GameManager : MonoBehaviour
 
         //<< Pedimos los tableros de distribución.
         GameManager.Run(GetObjectDTO<DistributionBoard[]>(UriDistributionBoards, OnGetDistributionBoards), nameof(UriDistributionBoards));
+
+        //<< Pedimos los objetos.
+        GameManager.Run(GetObjectDTO<GameplayItem[]>(UriGameplayItems, OnGetGameplayItems), nameof(UriGameplayItems));
+
+        //<< Pedimos nuestros objetos.
+        GameManager.Run(GetObjectDTO<GameplayItemStored[]>(UriGameplayItemsStored, OnGetGameplayItemsStored), nameof(UriGameplayItemsStored));
     }
 
     /// <summary>
@@ -173,7 +201,7 @@ public partial class GameManager : MonoBehaviour
     {
         foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
         {
-            loDistributionBoard.Setup(goBoardConstants.Widht, goBoardConstants.DistributionBoardLenght);
+            loDistributionBoard.Setup(goBoardConstants.Width, goBoardConstants.DistributionBoardLength);
             goDistributionBoards.Add(loDistributionBoard.Id, loDistributionBoard);
         }
 
@@ -196,6 +224,22 @@ public partial class GameManager : MonoBehaviour
             if (!goDistributionBoards.TryGetValue(loUnitCoordinates.DistributionBoardId, out loDistributionBoard)) continue;
             loDistributionBoard.AddUnit(loUnitCoordinates.UnitPropertiesId, loUnitCoordinates.X, loUnitCoordinates.Z);
         }
+    }
+
+    /// <summary>
+    /// Obtenemos los objetos del juego.
+    /// </summary>
+    private void OnGetGameplayItems(GameplayItem[] loGameplayItems)
+    {
+        foreach (GameplayItem loGameplayItem in loGameplayItems) goGameplayItems.Add(loGameplayItem.Id, loGameplayItem);
+    }
+
+    /// <summary>
+    /// Obtenemos los objetos del jgador.
+    /// </summary>
+    private void OnGetGameplayItemsStored(GameplayItemStored[] loGameplayItemsStored)
+    {
+        goInventory = loGameplayItemsStored;
     }
 
     /// <summary>
@@ -235,7 +279,7 @@ public partial class GameManager : MonoBehaviour
             case GameCommand.GetDistributionBoardDimensions:
                 {
                     UnityAction<int, int> loCallback = (UnityAction<int, int>)loParams[0];
-                    loCallback.Invoke(goBoardConstants.Widht, goBoardConstants.DistributionBoardLenght);
+                    loCallback.Invoke(goBoardConstants.Width, goBoardConstants.DistributionBoardLength);
                 }
                 break;
 
@@ -249,6 +293,8 @@ public partial class GameManager : MonoBehaviour
             case GameCommand.UnitExistsOnDistributionBoard: UnitExistsOnDistributionBoard((int)loParams[0], (int)loParams[1], (UnityAction<bool>)loParams[1]); break;
             case GameCommand.AddUnitToDistributionBoard: Run(AddUnitToDistributionBoard((int)loParams[0], (int)loParams[1], (int)loParams[2], (int)loParams[3]), nameof(GameCommand.AddUnitToDistributionBoard)); break;
             case GameCommand.RemoveUnitFromDistributionBoard: Run(RemoveUnitFromDistributionBoard((int)loParams[0], (int)loParams[1]), nameof(GameCommand.RemoveUnitFromDistributionBoard)); break;
+
+            case GameCommand.GetGameplayItemsStored: GetGameplayItemsStored((GameplayItemTiming?)loParams[0], (UnityAction<IEnumerable<GameplayItemStored>>)loParams[1]); break;
 
             default: break;
         }
@@ -489,7 +535,7 @@ public partial class GameManager : MonoBehaviour
         int lnUnitPropertiesIdSwitch = loDistributionBoard.GetIdOf(lnDistributionBoardX, lnDistributionBoardZ);
 
         //<< Si es la misma unidad en el mismo lugar no hacemos nada.
-        if(lnUnitPropertiesIdSwitch == lnUnitPropertiesId) yield break;
+        if (lnUnitPropertiesIdSwitch == lnUnitPropertiesId) yield break;
 
         //<< Revisamos si nos pasariamos del maximo de unidades permitidas.
         if (loDistributionBoard.GetUnitsCount() + 1 > goBoardConstants.MaxUnits && lnUnitPropertiesIdSwitch <= 0)
@@ -597,5 +643,29 @@ public partial class GameManager : MonoBehaviour
     //    //<< Avisamos que se ha removido la unidad del tablero de distribución.
     //    Send(GameCommand.RemovedUnitFromDistributionBoard, lnUnitPropertiesId, lnDistributionBoardId);
     //}
+
+    /// <summary>
+    /// Se llama para cuando piden item del inventario ya sea completos o filtrados.
+    /// </summary>
+    /// <param name="lbOpponent"></param>
+    /// <param name="loTiming"></param>
+    /// <param name="loCallback"></param>
+    private void GetGameplayItemsStored(GameplayItemTiming? loTiming, UnityAction<IEnumerable<GameplayItemStored>> loCallback)
+    {
+        //<< Si lo piden completo.
+        if (loTiming == null) { loCallback.Invoke(goInventory); return; }
+
+        //<< Si lo piden filtrado buscamos su timing.
+        List<GameplayItemStored> loFiltered = new List<GameplayItemStored>();
+        GameplayItem loGameplayItem;
+        foreach (GameplayItemStored loItem in goInventory)
+        {
+            loGameplayItem = goGameplayItems[loItem.GameplayItemId];
+            if (loGameplayItem.Timing == loTiming.Value) loFiltered.Add(loItem);
+        }
+
+        //<< Mandamos filtrado el inventario.
+        loCallback.Invoke(loFiltered);
+    }
     #endregion
 }

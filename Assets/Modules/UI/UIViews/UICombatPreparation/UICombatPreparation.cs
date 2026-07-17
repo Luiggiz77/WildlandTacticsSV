@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -92,11 +91,6 @@ public class UICombatPreparation : UIView
     private int gnSelectedDistributionBoardIndexUser = 0;
 
     /// <summary>
-    /// Nos indica el indice del tablero seleccionado del oponente.
-    /// </summary>
-    private int gnSelectedDistributionBoardIndexOpponent = 0;
-
-    /// <summary>
     /// Es el tamaño del padre de los mapas de distribucion.
     /// </summary>
     private Vector2 goDistributionBoardsParentSize;
@@ -104,12 +98,12 @@ public class UICombatPreparation : UIView
     /// <summary>
     /// Ancho del tablero de distribución (cuadrantes).
     /// </summary>
-    private int gnDistributionBoardWidht = 6;
+    private int gnDistributionBoardWidth = 6;
 
     /// <summary>
     /// Largo del tablero de distribución (cuadrantes).
     /// </summary>
-    private int gnDistributionBoardLenght = 7;
+    private int gnDistributionBoardLength = 7;
 
     /// <summary>
     /// Son los ids de nuestros tableros de distribución del usuario.
@@ -117,19 +111,14 @@ public class UICombatPreparation : UIView
     private List<int> goDistributionBoardsIdsUser = new List<int>();
 
     /// <summary>
-    /// Son los ids de nuestros tableros de distribución del oponente.
-    /// </summary>
-    private List<int> goDistributionBoardsIdsOpponent = new List<int>();
-
-    /// <summary>
     /// Nombres de los tableros de distribución del usuario.
     /// </summary>
     private List<string> goDistributionBoardsNamesUser = new List<string>();
 
     /// <summary>
-    /// Nombres de los tableros de distribución del oponente.
+    /// Es el id del tablero de distribución del oponente.
     /// </summary>
-    private List<string> goDistributionBoardsNamesOpponent = new List<string>();
+    private int gnDistributionBoardsIdOpponent = 0;
 
     /// <summary>
     /// Start
@@ -179,21 +168,7 @@ public class UICombatPreparation : UIView
     public IEnumerator WaitForEndOfFrame()
     {
         //<< Esperamos un frame para obtener las medidas.
-        yield return new WaitForEndOfFrame();
-
-        ////<< Obtenemos el recttransform del scrollrect para determinar el alto de los paneles.
-        //RectTransform loRectTransformScrollRect = panelScrollRectPreparation.transform as RectTransform;
-
-        ////<< Obtenemos el alto del recttransform del panel de preparación.
-        //float lnHeight = loRectTransformScrollRect.rect.height;
-
-
-        //<< "Deprecado"
-        //<< Asignamos la altura de los paneles que son su contenido del recttransform del panel de preparación.
-        //panelDistributionBoards.preferredHeight = panelDistributionBoards.minHeight = lnHeight;
-        //panelStartBattle.preferredHeight = panelStartBattle.minHeight = lnHeight * 0.5f;
-
-
+        yield return null;
 
         //<< Obtenemos la altura del padre del elemento que contiene los tableros de distribución para obtener la altura.
         goDistributionBoardsParentSize = (panelContentDistributionBoardsUser.transform.parent as RectTransform).sizeDelta;
@@ -202,23 +177,23 @@ public class UICombatPreparation : UIView
         GameManager.Send(GameCommand.GetDistributionBoardDimensions, new UnityAction<int, int>(OnGetDistributionBoardDimensions));
 
         //<< Pedimos nuestros tableros de distribución del usuario.
-        GameManager.Send(GameCommand.GetDistributionBoards, false, new UnityAction<bool, IEnumerable<DistributionBoard>>(OnGetDistributionBoards));
+        GameManager.Send(GameCommand.GetDistributionBoards, new UnityAction<IEnumerable<DistributionBoard>>(OnGetDistributionBoardsUser));
 
         //<< Pedimos nuestros tableros de distribución del oponente.
-        GameManager.Send(GameCommand.GetDistributionBoards, true, new UnityAction<bool, IEnumerable<DistributionBoard>>(OnGetDistributionBoards));
+        GameManager.Send(GameCommand.GetDistributionBoardOpponent, new UnityAction<DistributionBoard>(OnGetDistributionBoardOpponent));
 
         //<< Pedimos los ids de los objetos pre-combate.
-        GameManager.Send(GameCommand.GetGameplayItemsStored, false, GameplayItemTiming.BeforeCombat, new UnityAction<IEnumerable<GameplayItemStored>>(OnGetGameplayItemsStoredFiltered));
+        GameManager.Send(GameCommand.GetGameplayItemsStored, GameplayItemTiming.BeforeCombat, new UnityAction<IEnumerable<GameplayItemStored>>(OnGetGameplayItemsStoredFiltered));
     }
 
     /// <summary>
     /// Callback para recibir las dimensiones del tablero de distribución.
     /// </summary>
     /// <param name="loBoardProperties"></param>
-    private void OnGetDistributionBoardDimensions(int lnWidht, int lnLenght)
+    private void OnGetDistributionBoardDimensions(int lnWidth, int lnLength)
     {
-        gnDistributionBoardWidht = lnWidht;
-        gnDistributionBoardLenght = lnLenght;
+        gnDistributionBoardWidth = lnWidth;
+        gnDistributionBoardLength = lnLength;
     }
 
     /// <summary>
@@ -249,40 +224,13 @@ public class UICombatPreparation : UIView
     /// Callback de cuando recibimos los tableros de distribución.
     /// </summary>
     /// <param name="loUnitIds"></param>
-    private void OnGetDistributionBoards(bool lbOpponent, IEnumerable<DistributionBoard> loDistributionBoards)
+    private void OnGetDistributionBoardsUser(IEnumerable<DistributionBoard> loDistributionBoards)
     {
         Vector3 loDistributionBoardSize;
         float lnCellSize;
         float lnPaddingTop;
         float lnPadding;
         int lnHalfPadding;
-
-        //<< Copiamos los ids de nuestros tableros de distribución.
-        if (lbOpponent)
-        {
-            goDistributionBoardsIdsOpponent.Clear();
-            foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
-            {
-                goDistributionBoardsIdsOpponent.Add(loDistributionBoard.Id);
-                goDistributionBoardsNamesOpponent.Add(loDistributionBoard.Name);
-            }
-
-            //<< Configuramos inicialmente los tableros de distribución sin asignar datos.
-            UICamp.SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoardsOpponent, panelScrollRectPreparation, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidht, gnDistributionBoardLenght, distributionBoardSettings, prefabUIDistributionBoardOpponent, prefabUIDistributionBoardCellOpponent, out loDistributionBoardSize, out _, out _);
-
-            //<< Determinamos el padding de nuestros tableros de distribución usando su ancho.
-            lnPadding = goDistributionBoardsParentSize.x - loDistributionBoardSize.x;
-
-            lnHalfPadding = Mathf.FloorToInt(lnPadding * 0.5f);
-
-            //<< Alineamos al centro.
-            horizontalLayoutGroupDistributionBoardSelectionOpponent.spacing = lnPadding;
-            horizontalLayoutGroupDistributionBoardSelectionOpponent.padding.left = lnHalfPadding;
-            horizontalLayoutGroupDistributionBoardSelectionOpponent.padding.right = lnHalfPadding;
-
-            UpdateBoardTextName(lbOpponent);
-            return;
-        }
 
         //<< Si son de usuario.
         goDistributionBoardsIdsUser.Clear();
@@ -294,7 +242,7 @@ public class UICombatPreparation : UIView
         }
 
         //<< Configuramos inicialmente los tableros de distribución sin asignar datos.
-        UICamp.SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoardsUser, panelScrollRectPreparation, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidht, gnDistributionBoardLenght, distributionBoardSettings, prefabUIDistributionBoardUser, prefabUIDistributionBoardCellUser, out loDistributionBoardSize, out lnCellSize, out lnPaddingTop);
+        UICamp.SetupDistributionBoards(loDistributionBoards, panelContentDistributionBoardsUser, panelScrollRectPreparation, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidth, gnDistributionBoardLength, distributionBoardSettings, prefabUIDistributionBoardUser, prefabUIDistributionBoardCellUser, out loDistributionBoardSize, out lnCellSize, out lnPaddingTop);
 
         //<< Determinamos el padding de nuestros tableros de distribución usando su ancho.
         lnPadding = goDistributionBoardsParentSize.x - loDistributionBoardSize.x;
@@ -314,7 +262,7 @@ public class UICombatPreparation : UIView
         GameManager.DeactivateSpawns(lnHashCodeDistributionBoardCellCenter);
 
         //<< Agregamos las celdas centrales.
-        for (int i = 0; i < gnDistributionBoardWidht; i++)
+        for (int i = 0; i < gnDistributionBoardWidth; i++)
         {
             RectTransform loRectTransformCellCenter = GameManager.Spawn(lnHashCodeDistributionBoardCellCenter, prefabUIDistributionBoardCellCenter);
             loRectTransformCellCenter.SetParent(gridLayoutGroupCenterCells.transform, false);
@@ -322,7 +270,37 @@ public class UICombatPreparation : UIView
         }
 
         //<< Colocamos el nombre del tablero seleccionando el tablero que se encuentra actualmente seleccionado
-        UpdateBoardTextName(lbOpponent);
+        UpdateBoardTextName();
+    }
+
+    /// <summary>
+    /// Callback de cuando recibimos los tableros de distribución.
+    /// </summary>
+    /// <param name="loUnitIds"></param>
+    private void OnGetDistributionBoardOpponent(DistributionBoard loDistributionBoard)
+    {
+        Vector3 loDistributionBoardSize;
+        float lnPadding;
+        int lnHalfPadding;
+
+        //<< Copiamos el id del tablero de distribución del oponente.
+        gnDistributionBoardsIdOpponent = loDistributionBoard.Id;
+
+        //<< Colocamos el nombre del tablero
+        distributionBoardNameOpponent.text = loDistributionBoard.Name;
+
+        //<< Configuramos inicialmente los tableros de distribución sin asignar datos.
+        UICamp.SetupDistributionBoard(loDistributionBoard, panelContentDistributionBoardsOpponent, panelScrollRectPreparation, goDistributionBoardsParentSize.x, goDistributionBoardsParentSize.y, gnDistributionBoardWidth, gnDistributionBoardLength, distributionBoardSettings, prefabUIDistributionBoardOpponent, prefabUIDistributionBoardCellOpponent, out loDistributionBoardSize, out _, out _);
+
+        //<< Determinamos el padding de nuestros tableros de distribución usando su ancho.
+        lnPadding = goDistributionBoardsParentSize.x - loDistributionBoardSize.x;
+
+        lnHalfPadding = Mathf.FloorToInt(lnPadding * 0.5f);
+
+        //<< Alineamos al centro.
+        horizontalLayoutGroupDistributionBoardSelectionOpponent.spacing = lnPadding;
+        horizontalLayoutGroupDistributionBoardSelectionOpponent.padding.left = lnHalfPadding;
+        horizontalLayoutGroupDistributionBoardSelectionOpponent.padding.right = lnHalfPadding;
     }
 
     /// <summary>
@@ -332,7 +310,7 @@ public class UICombatPreparation : UIView
     {
         if (gnSelectedDistributionBoardIndexUser <= 0) return;
         gnSelectedDistributionBoardIndexUser--;
-        UpdateBoardTextName(false);
+        UpdateBoardTextName();
         paginationScrollRectDistributionBoardsUser.PreviousPage();
     }
 
@@ -343,30 +321,8 @@ public class UICombatPreparation : UIView
     {
         if (gnSelectedDistributionBoardIndexUser >= goDistributionBoardsIdsUser.Count - 1) return;
         gnSelectedDistributionBoardIndexUser++;
-        UpdateBoardTextName(false);
+        UpdateBoardTextName();
         paginationScrollRectDistributionBoardsUser.NextPage();
-    }
-
-    /// <summary>
-    /// Se llama cuando le dan click a la flecha izquieda para cambiar de mapa de distribución.
-    /// </summary>
-    public void OnClickLeftArrowOpponent()
-    {
-        if (gnSelectedDistributionBoardIndexOpponent <= 0) return;
-        gnSelectedDistributionBoardIndexOpponent--;
-        paginationScrollRectDistributionBoardsOpponent.PreviousPage();
-        UpdateBoardTextName(true);
-    }
-
-    /// <summary>
-    /// Se llama cuando le dan click a la flecha derecha para cambiar de mapa de distribución.
-    /// </summary>
-    public void OnClickRightArrowOpponent()
-    {
-        if (gnSelectedDistributionBoardIndexOpponent >= goDistributionBoardsIdsUser.Count - 1) return;
-        gnSelectedDistributionBoardIndexOpponent++;
-        paginationScrollRectDistributionBoardsOpponent.NextPage();
-        UpdateBoardTextName(true);
     }
 
     /// <summary>
@@ -375,6 +331,7 @@ public class UICombatPreparation : UIView
     public void OnClickReturn()
     {
         panel.SetActive(false);
+        GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
         GameManager.Send(GameCommand.ShowUIMainMenu);
     }
 
@@ -384,6 +341,7 @@ public class UICombatPreparation : UIView
     public void OnClickGoToCamp()
     {
         panel.SetActive(false);
+        GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
         GameManager.Send(GameCommand.ShowUICamp);
     }
 
@@ -393,23 +351,19 @@ public class UICombatPreparation : UIView
     public void OnClickStartCombat()
     {
         panel.gameObject.SetActive(false);
+        GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
 
         //<< Indicamos que tableros se están usando.
         int lnDistributionBoardIsUser = goDistributionBoardsIdsUser[gnSelectedDistributionBoardIndexUser];
-        int lnDistributionBoardIsOpponent = goDistributionBoardsIdsOpponent[gnSelectedDistributionBoardIndexOpponent];
 
         //<< Avisamos que deseamos iniciar el combate.
-        GameManager.Send(GameCommand.ShowUICombat, lnDistributionBoardIsUser, lnDistributionBoardIsOpponent);
+        GameManager.Send(GameCommand.ShowUICombat, lnDistributionBoardIsUser, gnDistributionBoardsIdOpponent);
     }
 
     public void OnClickNameUser()
     {
+        GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
         GameManager.Send(GameCommand.ShowUIEditStringBalloon, distributionBoardNameUser.text, new UnityAction<string>(OnEditedStringUser), nameof(DistributionBoard), nameof(DistributionBoard.Name), goDistributionBoardsIdsUser[gnSelectedDistributionBoardIndexUser], "False");
-    }
-
-    public void OnClickNameOpponent()
-    {
-        GameManager.Send(GameCommand.ShowUIEditStringBalloon, distributionBoardNameOpponent.text, new UnityAction<string>(OnEditedStringOpponent), nameof(DistributionBoard), nameof(DistributionBoard.Name), goDistributionBoardsIdsOpponent[gnSelectedDistributionBoardIndexOpponent], null);
     }
 
     /// <summary>
@@ -421,18 +375,10 @@ public class UICombatPreparation : UIView
         distributionBoardNameUser.text = lcString;
     }
 
-    private void OnEditedStringOpponent(string lcString)
+    private void UpdateBoardTextName()
     {
-        goDistributionBoardsNamesOpponent[gnSelectedDistributionBoardIndexOpponent] = lcString;
-        distributionBoardNameOpponent.text = lcString;
-    }
-
-    private void UpdateBoardTextName(bool lbOpponent)
-    {
-        if (!lbOpponent)
-            distributionBoardNameUser.text = goDistributionBoardsNamesUser[gnSelectedDistributionBoardIndexUser];
-        else
-            distributionBoardNameOpponent.text = goDistributionBoardsNamesOpponent[gnSelectedDistributionBoardIndexOpponent];
+        if(goDistributionBoardsNamesUser.Count == 0) { distributionBoardNameUser.text = string.Empty; return; }
+        distributionBoardNameUser.text = goDistributionBoardsNamesUser[gnSelectedDistributionBoardIndexUser];
     }
 
     /// <summary>
