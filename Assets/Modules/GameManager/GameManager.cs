@@ -27,8 +27,8 @@ public partial class GameManager : MonoBehaviour
     private void Start()
     {
         StartLanguage();
-        StartAdressables();
         StartWebsite();
+        StartAdressables();
     }
 
     /// <summary>

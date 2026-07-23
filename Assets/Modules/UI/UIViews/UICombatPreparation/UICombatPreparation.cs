@@ -88,7 +88,7 @@ public class UICombatPreparation : UIView
     /// <summary>
     /// Nos indica el indice del tablero seleccionado del usuario.
     /// </summary>
-    private int gnSelectedDistributionBoardIndexUser = 0;
+    private int gnSelectedDistributionBoardIndex = 0;
 
     /// <summary>
     /// Es el tamaño del padre de los mapas de distribucion.
@@ -108,17 +108,12 @@ public class UICombatPreparation : UIView
     /// <summary>
     /// Son los ids de nuestros tableros de distribución del usuario.
     /// </summary>
-    private List<int> goDistributionBoardsIdsUser = new List<int>();
+    private List<int> goDistributionBoardsIds = new List<int>();
 
     /// <summary>
     /// Nombres de los tableros de distribución del usuario.
     /// </summary>
-    private List<string> goDistributionBoardsNamesUser = new List<string>();
-
-    /// <summary>
-    /// Es el id del tablero de distribución del oponente.
-    /// </summary>
-    private int gnDistributionBoardsIdOpponent = 0;
+    private List<string> goDistributionBoardsNames = new List<string>();
 
     /// <summary>
     /// Start
@@ -233,12 +228,12 @@ public class UICombatPreparation : UIView
         int lnHalfPadding;
 
         //<< Si son de usuario.
-        goDistributionBoardsIdsUser.Clear();
-        goDistributionBoardsNamesUser.Clear();
+        goDistributionBoardsIds.Clear();
+        goDistributionBoardsNames.Clear();
         foreach (DistributionBoard loDistributionBoard in loDistributionBoards)
         {
-            goDistributionBoardsIdsUser.Add(loDistributionBoard.Id);
-            goDistributionBoardsNamesUser.Add(loDistributionBoard.Name);
+            goDistributionBoardsIds.Add(loDistributionBoard.Id);
+            goDistributionBoardsNames.Add(loDistributionBoard.Name);
         }
 
         //<< Configuramos inicialmente los tableros de distribución sin asignar datos.
@@ -283,9 +278,6 @@ public class UICombatPreparation : UIView
         float lnPadding;
         int lnHalfPadding;
 
-        //<< Copiamos el id del tablero de distribución del oponente.
-        gnDistributionBoardsIdOpponent = loDistributionBoard.Id;
-
         //<< Colocamos el nombre del tablero
         distributionBoardNameOpponent.text = loDistributionBoard.Name;
 
@@ -308,8 +300,8 @@ public class UICombatPreparation : UIView
     /// </summary>
     public void OnClickLeftArrowUser()
     {
-        if (gnSelectedDistributionBoardIndexUser <= 0) return;
-        gnSelectedDistributionBoardIndexUser--;
+        if (gnSelectedDistributionBoardIndex <= 0) return;
+        gnSelectedDistributionBoardIndex--;
         UpdateBoardTextName();
         paginationScrollRectDistributionBoardsUser.PreviousPage();
     }
@@ -319,8 +311,8 @@ public class UICombatPreparation : UIView
     /// </summary>
     public void OnClickRightArrowUser()
     {
-        if (gnSelectedDistributionBoardIndexUser >= goDistributionBoardsIdsUser.Count - 1) return;
-        gnSelectedDistributionBoardIndexUser++;
+        if (gnSelectedDistributionBoardIndex >= goDistributionBoardsIds.Count - 1) return;
+        gnSelectedDistributionBoardIndex++;
         UpdateBoardTextName();
         paginationScrollRectDistributionBoardsUser.NextPage();
     }
@@ -353,17 +345,34 @@ public class UICombatPreparation : UIView
         panel.gameObject.SetActive(false);
         GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
 
-        //<< Indicamos que tableros se están usando.
-        int lnDistributionBoardIsUser = goDistributionBoardsIdsUser[gnSelectedDistributionBoardIndexUser];
+        //<< En esta seccion pasamos a pantalla de "Buscando Combate" ó "Iniciando combate" dependiendo de si es IA o Buscar jugador.
 
-        //<< Avisamos que deseamos iniciar el combate.
-        GameManager.Send(GameCommand.ShowUICombat, lnDistributionBoardIsUser, gnDistributionBoardsIdOpponent);
+        //<< Si hay un error o pasa demasiado tiempo que regrese?
+
+        //<< Cada 3 segundos debe existir un heartbeat para saber que el usuario sigue interesado en el combate, se pone un timeflag en servidor.
+        //<< El usuario manda el id de su tablero de distribución a usar así como los items que usará al inicio del combate.
+
+        //<< Una ves que ambos contrincantes se seleccionaron para el match se configura y guarda el tablero en base de datos.
+
+        //<< Ya con el tablero guardado les mandamos mensaje a los jugadores con signal R de ser posible para darles los datos del tablero.
+
+        //<< Cada jugador saca del tablero los datos de las unidades para generarlas.
+
+        //<< Se les da unos segundos de carga para que puedan generar sus mapas.
+
+        //<< Una ves que los jugadores están listos se elige el turno con base en los items usados.
+
+        ////<< Indicamos que tableros se están usando.
+        //int lnDistributionBoardIsUser = goDistributionBoardsIds[gnSelectedDistributionBoardIndex];
+
+        ////<< Avisamos que deseamos iniciar el combate.
+        //GameManager.Send(GameCommand.ShowUICombat, lnDistributionBoardIsUser, gnDistributionBoardsIdOpponent);
     }
 
     public void OnClickNameUser()
     {
         GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
-        GameManager.Send(GameCommand.ShowUIEditStringBalloon, distributionBoardNameUser.text, new UnityAction<string>(OnEditedStringUser), nameof(DistributionBoard), nameof(DistributionBoard.Name), goDistributionBoardsIdsUser[gnSelectedDistributionBoardIndexUser], "False");
+        GameManager.Send(GameCommand.ShowUIEditStringBalloon, distributionBoardNameUser.text, new UnityAction<string>(OnEditedStringUser), nameof(DistributionBoard), nameof(DistributionBoard.Name), goDistributionBoardsIds[gnSelectedDistributionBoardIndex], "False");
     }
 
     /// <summary>
@@ -371,14 +380,14 @@ public class UICombatPreparation : UIView
     /// </summary>
     private void OnEditedStringUser(string lcString)
     {
-        goDistributionBoardsNamesUser[gnSelectedDistributionBoardIndexUser] = lcString;
+        goDistributionBoardsNames[gnSelectedDistributionBoardIndex] = lcString;
         distributionBoardNameUser.text = lcString;
     }
 
     private void UpdateBoardTextName()
     {
-        if(goDistributionBoardsNamesUser.Count == 0) { distributionBoardNameUser.text = string.Empty; return; }
-        distributionBoardNameUser.text = goDistributionBoardsNamesUser[gnSelectedDistributionBoardIndexUser];
+        if(goDistributionBoardsNames.Count == 0) { distributionBoardNameUser.text = string.Empty; return; }
+        distributionBoardNameUser.text = goDistributionBoardsNames[gnSelectedDistributionBoardIndex];
     }
 
     /// <summary>

@@ -57,8 +57,8 @@ public class UIModal : UIView
                 textButtonOk.text = (string)loParams[1];
                 textButtonCancel.text = (string)loParams[2];
                 buttonCancel.SetActive(!string.IsNullOrWhiteSpace(textButtonCancel.text));
-                goOnClick = loParams.Length > 2 ? (UnityAction<bool>)loParams[3] : null;
-                goResult = loParams.Length > 3 ? (CoroutineResultStruct<bool>)loParams[4] : null;
+                goOnClick = loParams.Length > 3 ? (UnityAction<bool>)loParams[3] : null;
+                goResult = loParams.Length > 4 ? (CoroutineResultStruct<bool>)loParams[4] : null;
                 if (goResult != null) goResult.Reset();
                 panel.SetActive(true);
                 break;
