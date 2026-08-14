@@ -133,6 +133,17 @@ public partial class GameManager : MonoBehaviour
         UriGameplayItems = new Uri(UriWebsite, "GameplayItems");
         UriGameplayItemsStored = new Uri(UriWebsite, "GameplayItemsStored");
 
+#if UNITY_EDITOR
+        string lcClientTag = Unity.Multiplayer.PlayMode.CurrentPlayer.Tags.Count > 0 ? Unity.Multiplayer.PlayMode.CurrentPlayer.Tags[0] : string.Empty;
+        string lcClientId = PlayerPrefs.GetString(ClientIdKey + lcClientTag, Guid.NewGuid().ToString());
+        string lcPassword = PlayerPrefs.GetString(PasswordKey + lcClientTag, string.Empty);
+        if (string.IsNullOrEmpty(lcPassword))
+        {
+            lcPassword = GeneratePasswordHash(lcClientId);
+            PlayerPrefs.SetString(ClientIdKey + lcClientTag, lcClientId);
+            PlayerPrefs.SetString(PasswordKey + lcClientTag, lcPassword);
+        }
+#else
         string lcClientId = PlayerPrefs.GetString(ClientIdKey, Guid.NewGuid().ToString());
         string lcPassword = PlayerPrefs.GetString(PasswordKey, string.Empty);
         if (string.IsNullOrEmpty(lcPassword))
@@ -141,6 +152,7 @@ public partial class GameManager : MonoBehaviour
             PlayerPrefs.SetString(ClientIdKey, lcClientId);
             PlayerPrefs.SetString(PasswordKey, lcPassword);
         }
+#endif
 
         //<< Nos conectamos a los comandos.
         AddListener(OnGameCommandWebsite);
@@ -152,22 +164,22 @@ public partial class GameManager : MonoBehaviour
     private void StartWebsite()
     {
         //<< Pedimos los UnitBattleProperties.
-        GameManager.Run(GetObjectDTO<UnitBattleProperties[]>(UriUnitsBattleProperties, OnGetUnitsBattleProperties), nameof(UriUnitsBattleProperties));
+        goStartCoroutines.Add(GetObjectDTO<UnitBattleProperties[]>(UriUnitsBattleProperties, OnGetUnitsBattleProperties));
 
         //<< Pedimos los UnitProperties.
-        GameManager.Run(GetObjectDTO<UnitProperties[]>(UriUnitsProperties, OnGetUnitsProperties), nameof(UriUnitsProperties));
+        goStartCoroutines.Add(GetObjectDTO<UnitProperties[]>(UriUnitsProperties, OnGetUnitsProperties));
 
         //<< Pedimos las constantes del tablero.
-        GameManager.Run(GetObjectDTO<BoardConstants>(UriBoardConstants, OnGetBoardConstants), nameof(UriBoardConstants));
+        goStartCoroutines.Add(GetObjectDTO<BoardConstants>(UriBoardConstants, OnGetBoardConstants));
 
         //<< Pedimos los tableros de distribución.
-        GameManager.Run(GetObjectDTO<DistributionBoard[]>(UriDistributionBoards, OnGetDistributionBoards), nameof(UriDistributionBoards));
+        goStartCoroutines.Add(GetObjectDTO<DistributionBoard[]>(UriDistributionBoards, OnGetDistributionBoards));
 
         //<< Pedimos los objetos.
-        GameManager.Run(GetObjectDTO<GameplayItem[]>(UriGameplayItems, OnGetGameplayItems), nameof(UriGameplayItems));
+        goStartCoroutines.Add(GetObjectDTO<GameplayItem[]>(UriGameplayItems, OnGetGameplayItems));
 
         //<< Pedimos nuestros objetos.
-        GameManager.Run(GetObjectDTO<GameplayItemStored[]>(UriGameplayItemsStored, OnGetGameplayItemsStored), nameof(UriGameplayItemsStored));
+        goStartCoroutines.Add(GetObjectDTO<GameplayItemStored[]>(UriGameplayItemsStored, OnGetGameplayItemsStored));
     }
 
     /// <summary>
@@ -316,7 +328,12 @@ public partial class GameManager : MonoBehaviour
     /// <returns></returns>
     private static string ClientId()
     {
-        return PlayerPrefs.GetString(ClientIdKey);
+#if UNITY_EDITOR
+        string lcClientTag = Unity.Multiplayer.PlayMode.CurrentPlayer.Tags.Count > 0 ? Unity.Multiplayer.PlayMode.CurrentPlayer.Tags[0] : string.Empty;
+        return PlayerPrefs.GetString(ClientIdKey + lcClientTag, Guid.NewGuid().ToString());
+#else
+        return PlayerPrefs.GetString(ClientIdKey);  
+#endif
     }
 
     /// <summary>
@@ -325,7 +342,12 @@ public partial class GameManager : MonoBehaviour
     /// <returns></returns>
     private static string Password()
     {
+#if UNITY_EDITOR
+        string lcClientTag = Unity.Multiplayer.PlayMode.CurrentPlayer.Tags.Count > 0 ? Unity.Multiplayer.PlayMode.CurrentPlayer.Tags[0] : string.Empty;
+        return PlayerPrefs.GetString(PasswordKey + lcClientTag, Guid.NewGuid().ToString());
+#else
         return PlayerPrefs.GetString(PasswordKey);
+#endif
     }
 
     /// <summary>
@@ -396,19 +418,22 @@ public partial class GameManager : MonoBehaviour
     /// Se llama para hacer login forzado hasta que se logre con control de error.
     /// </summary>
     /// <returns></returns>
-    private static IEnumerator Login(CoroutineResult<string> loResult)
+    private static IEnumerator Login(CoroutineResult loResult)
     {
         //<< Revisamos si hay internet.
         if (Application.internetReachability == NetworkReachability.NotReachable)
         {
-            loResult.OnFailed($"{nameof(Application.internetReachability)}: {nameof(NetworkReachability.NotReachable)}");
+#if UNITY_EDITOR
+            Debug.Log($"{nameof(Application.internetReachability)}: {nameof(NetworkReachability.NotReachable)}");
+#endif
+            loResult.Failed();
             yield break;
         }
 
         //<< Si el token es valido y tenemos internet continuamos correctamente.
         if (IsTokenValid())
         {
-            loResult.OnCompleted();
+            loResult.Succeed();
             yield break;
         }
 
@@ -418,11 +443,14 @@ public partial class GameManager : MonoBehaviour
         //<< Revisamos si el token es valido.
         if (!IsTokenValid())
         {
-            loResult.OnFailed($"Token invalid.");
+#if UNITY_EDITOR
+            Debug.Log($"Token invalid.");
+#endif
+            loResult.Failed();
             yield break;
         }
 
-        loResult.OnCompleted();
+        loResult.Succeed();
         yield break;
     }
 
@@ -450,12 +478,12 @@ public partial class GameManager : MonoBehaviour
     private static IEnumerator GetObjectDTO<T>(Uri loUri, UnityAction<T> loCallback, params DTO2<string, string>[] loParams) where T : class
     {
         yield return Login();
-        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        CoroutineResultValue<string> loCoroutineResult = new CoroutineResultValue<string>();
         yield return Post(loUri, null, loCoroutineResult, loParams);
-        if (!loCoroutineResult.Completed) loCallback.Invoke(null);
+        if (!loCoroutineResult.Succeeded) loCallback.Invoke(null);
         else
         {
-            string lcJson = loCoroutineResult.Object;
+            string lcJson = loCoroutineResult.Value;
             DTO1<T> loObject = JsonUtility.FromJson<DTO1<T>>(lcJson);
             loCallback.Invoke(loObject.Item1);
         }
@@ -469,7 +497,7 @@ public partial class GameManager : MonoBehaviour
     /// <param name="loUri"></param>
     /// <param name="loResult"></param>
     /// <returns></returns>
-    private static IEnumerator DownloadTextFile(Uri loUri, CoroutineResult<string> loResult)
+    private static IEnumerator DownloadTextFile(Uri loUri, CoroutineResultValue<string> loResult)
     {
         //<< Creamos la petición GET a la URL
         using (UnityWebRequest loUnityWebRequest = UnityWebRequest.Get(loUri))
@@ -478,8 +506,8 @@ public partial class GameManager : MonoBehaviour
             yield return loUnityWebRequest.SendWebRequest();
 
             //<< Verificamos si hubo algún error
-            if (loUnityWebRequest.result == UnityWebRequest.Result.ConnectionError || loUnityWebRequest.result == UnityWebRequest.Result.ProtocolError) loResult.OnFailed(loUnityWebRequest.error);
-            else loResult.OnCompleted(loUnityWebRequest.downloadHandler.text);
+            if (loUnityWebRequest.result == UnityWebRequest.Result.ConnectionError || loUnityWebRequest.result == UnityWebRequest.Result.ProtocolError) loResult.Failed(loUnityWebRequest.error);
+            else loResult.Succeed(loUnityWebRequest.downloadHandler.text);
         }
     }
 
@@ -520,9 +548,9 @@ public partial class GameManager : MonoBehaviour
     private IEnumerator AddUnitToDistributionBoard(int lnDistributionBoardId, int lnUnitPropertiesId, int lnDistributionBoardX, int lnDistributionBoardZ)
     {
         //<< Revisamos si tenemos login.
-        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        CoroutineResultValue<string> loCoroutineResult = new CoroutineResultValue<string>();
         yield return Login(loCoroutineResult);
-        if (!loCoroutineResult.Completed)
+        if (!loCoroutineResult.Succeeded)
         {
             GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
             yield break;
@@ -546,7 +574,7 @@ public partial class GameManager : MonoBehaviour
 
         //<< Ya que llegamos aqui pedimos al servidor que haga la actualización del tablero de distribución.
         yield return Post(UriAddUnitToDistributionBoard, null, loCoroutineResult, new DTO2<string, string>($"DistributionBoardId", $"{lnDistributionBoardId}"), new DTO2<string, string>($"UnitPropertiesId", $"{lnUnitPropertiesId}"), new DTO2<string, string>($"DistributionBoardX", $"{lnDistributionBoardX}"), new DTO2<string, string>($"DistributionBoardZ", $"{lnDistributionBoardZ}"));
-        if (!loCoroutineResult.Completed)
+        if (!loCoroutineResult.Succeeded)
         {
             GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
             yield break;
@@ -589,9 +617,9 @@ public partial class GameManager : MonoBehaviour
     private IEnumerator RemoveUnitFromDistributionBoard(int lnDistributionBoardId, int lnUnitPropertiesId)
     {
         //<< Revisamos si tenemos login.
-        CoroutineResult<string> loCoroutineResult = new CoroutineResult<string>();
+        CoroutineResultValue<string> loCoroutineResult = new CoroutineResultValue<string>();
         yield return Login(loCoroutineResult);
-        if (!loCoroutineResult.Completed)
+        if (!loCoroutineResult.Succeeded)
         {
             GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
             yield break;
@@ -609,7 +637,7 @@ public partial class GameManager : MonoBehaviour
 
         //<< Ya que llegamos aqui pedimos al servidor que haga la actualización del tablero de distribución.
         yield return Post(UriRemoveUnitFromDistributionBoard, null, loCoroutineResult, new DTO2<string, string>($"DistributionBoardId", $"{lnDistributionBoardId}"), new DTO2<string, string>($"UnitPropertiesId", $"{lnUnitPropertiesId}"));
-        if (!loCoroutineResult.Completed)
+        if (!loCoroutineResult.Succeeded)
         {
             GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.NoInternet), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Ok), null, null);
             yield break;
@@ -620,29 +648,6 @@ public partial class GameManager : MonoBehaviour
         Send(GameCommand.RemovedUnitFromDistributionBoard, lnDistributionBoardId, lnUnitPropertiesId);
         yield break;
     }
-
-    ///// <summary>
-    ///// Se llama para remover una unidad del mapa de distribución con base en el id dado. (Temp)
-    ///// </summary>
-    ///// <param name="lnUnitPropertiesId"></param>
-    //private void RemoveUnitFromDistributionBoard(int lnUnitPropertiesId, int lnDistributionBoardId)
-    //{
-    //    //<< Obtenemos el tablero.
-    //    DistributionBoard loDistributionBoard;
-
-    //    UnitProperties loUnitProperties = GetUnitProperties(lnUnitPropertiesId);
-    //    if (loUnitProperties.Opponent) loDistributionBoard = goDistributionBoardsOpponent.FirstOrDefault(x => x.DistributionBoardId == lnDistributionBoardId);
-    //    else loDistributionBoard = goDistributionBoardsUser.FirstOrDefault(x => x.DistributionBoardId == lnDistributionBoardId);
-
-    //    //<< Removemos rastro de la unidad del tablero si es que existe en el.
-    //    loDistributionBoard.RemoveUnit(lnUnitPropertiesId);
-
-    //    //<< Guadamos localmente el tablero de distribución. (Temp) Nota: No se sabe si se guardaran en servidor tambien. FINDME
-    //    PlayerPrefsJson.Set($"{(loUnitProperties.Opponent ? PlayerPrefsJson.Key.DistributionBoardOpponent : PlayerPrefsJson.Key.DistributionBoardUser)}{lnDistributionBoardId}", loDistributionBoard);
-
-    //    //<< Avisamos que se ha removido la unidad del tablero de distribución.
-    //    Send(GameCommand.RemovedUnitFromDistributionBoard, lnUnitPropertiesId, lnDistributionBoardId);
-    //}
 
     /// <summary>
     /// Se llama para cuando piden item del inventario ya sea completos o filtrados.

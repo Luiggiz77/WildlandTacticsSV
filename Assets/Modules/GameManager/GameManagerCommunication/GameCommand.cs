@@ -404,7 +404,7 @@ public enum GameCommand : int
     /// param[1] = string lcTextButtonOk - Es el texto a mostrar en el boton de Ok.
     /// param[2] = string lcTextButtonCancel - Es el texto a mostrar en el boton de Cancel. Nota: Si es null o empty no se muestra el botón de cancelar.
     /// param[3] = UnityAction<bool> loCallback - Evento para indicar si le dieron click a Ok (true) o Cancel (false). (Opcional)
-    /// param[4] = CoroutineResultStruct<bool> loObjectCallback - Objeto para indicar si le dieron click a Ok (true) o Cancel (false). (Opcional)
+    /// param[4] = CoroutineResult loObjectCallback - Objeto para indicar si le dieron click a Ok (Succeed) o Cancel (Failed). (Opcional)
     /// </summary>
     ShowUIModal,
 
@@ -578,6 +578,12 @@ public enum GameCommand : int
     /// Se llama para mostrar el bondo de la interfaz.
     /// </summary>
     ShowUIBackground,
+
+    /// <summary>
+    /// Se llama para mostrar la pantalla de buscar partida.
+    /// param[0] = int lnDistributionBoardId - Es el id del tablero de  distribucion elegido.
+    /// </summary>
+    ShowUIFindMatch,
     #endregion
 
     #region Hide UI

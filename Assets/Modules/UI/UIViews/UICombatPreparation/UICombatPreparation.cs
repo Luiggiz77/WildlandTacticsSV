@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -362,11 +363,11 @@ public class UICombatPreparation : UIView
 
         //<< Una ves que los jugadores están listos se elige el turno con base en los items usados.
 
-        ////<< Indicamos que tableros se están usando.
-        //int lnDistributionBoardIsUser = goDistributionBoardsIds[gnSelectedDistributionBoardIndex];
+        //<< Obtenemos el id del tablero que se usará.
+        int lnDistributionBoardId = goDistributionBoardsIds[gnSelectedDistributionBoardIndex];
 
-        ////<< Avisamos que deseamos iniciar el combate.
-        //GameManager.Send(GameCommand.ShowUICombat, lnDistributionBoardIsUser, gnDistributionBoardsIdOpponent);
+        //<< Avisamos que deseamos iniciar el combate.
+        GameManager.Send(GameCommand.ShowUIFindMatch, lnDistributionBoardId);
     }
 
     public void OnClickNameUser()
@@ -400,3 +401,60 @@ public class UICombatPreparation : UIView
         textGameplayItemDescription.SetText(GameManager.GetText(GameTextUsage.GameplayItemDescription, lnGameplayItemId));
     }
 }
+
+
+//using System;
+//using System.Collections.Generic;
+//using System.Threading.Tasks;
+//using Microsoft.AspNetCore.SignalR.Client;
+//using UnityEngine;
+
+//public class SignalRManager : MonoBehaviour
+//{
+//    private HubConnection _connection;
+
+//    async void Start()
+//    {
+//        // 1. Construir la conexión apuntando a tu servidor backend
+//        _connection = new HubConnectionBuilder()
+//            .WithUrl("https://tu-servidor-backend.com/chathub")
+//            .WithAutomaticReconnect() // Reconexión automática si se cae el internet
+//            .Build();
+
+//        // 2. Escuchar eventos que envía el servidor
+//        _connection.On<string, string>("RecibirMensaje", (usuario, mensaje) =>
+//        {
+//            Debug.Log($"{usuario}: {mensaje}");
+//            // Aquí puedes actualizar la interfaz de Unity o mover un objeto
+//        });
+
+//        try
+//        {
+//            // 3. Iniciar la conexión de forma asíncrona
+//            await _connection.StartAsync();
+//            Debug.Log("¡Conectado a SignalR desde Unity!");
+//        }
+//        catch (Exception ex)
+//        {
+//            Debug.LogError($"Error al conectar: {ex.Message}");
+//        }
+//    }
+
+//    // 4. Método para enviar datos al servidor desde Unity
+//    public async Task EnviarMensajeAlServidor(string usuario, string mensaje)
+//    {
+//        if (_connection.State == HubConnectionState.Connected)
+//        {
+//            await _connection.SendAsync("EnviarMensaje", usuario, mensaje);
+//        }
+//    }
+
+//    private async void OnDestroy()
+//    {
+//        // Limpiar la conexión al cerrar el juego o cambiar de escena
+//        if (_connection != null)
+//        {
+//            await _connection.DisposeAsync();
+//        }
+//    }
+//}

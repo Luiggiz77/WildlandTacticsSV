@@ -106,7 +106,7 @@ public partial class GameManager : MonoBehaviour
     /// <param name="lcText"></param>
     /// <param name="loOnresult"></param>
     /// <returns></returns>
-    public static IEnumerator Post(string lcUrl, string lcText, UnityAction<bool, string> loOnResult, CoroutineResult<string> loPostResult = null)
+    public static IEnumerator Post(string lcUrl, string lcText, UnityAction<bool, string> loOnResult, CoroutineResultValue<string> loPostResult = null)
     {
         if (string.IsNullOrEmpty(lcText)) yield break;
 
@@ -125,12 +125,15 @@ public partial class GameManager : MonoBehaviour
 
                     if (loUnityWebRequest.result == UnityWebRequest.Result.Success)
                     {
-                        if (loPostResult != null) loPostResult.OnCompleted(loUnityWebRequest.downloadHandler.text);
+                        if (loPostResult != null)
+                        {
+                            loPostResult.Succeed(loUnityWebRequest.downloadHandler.text);
+                        }
                         loOnResult?.Invoke(true, loUnityWebRequest.downloadHandler.text);
                     }
                     else
                     {
-                        if (loPostResult != null) loPostResult.OnFailed();
+                        if (loPostResult != null) loPostResult.Failed(loUnityWebRequest.error);
                         loOnResult?.Invoke(false, loUnityWebRequest.error);
                     }
                 }
@@ -141,7 +144,7 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Se llama para obtener el token, ya sea creando una cuenta o como login.
     /// </summary>
-    public static IEnumerator Post(Uri loUri, UnityAction<bool, string> loOnResult, CoroutineResult<string> loPostResult, params DTO2<string, string>[] loParams)
+    public static IEnumerator Post(Uri loUri, UnityAction<bool, string> loOnResult, CoroutineResultValue<string> loPostResult, params DTO2<string, string>[] loParams)
     {
         //<< Si no tenemos token local sabemos que debemos crear cuenta.
         WaitForSeconds loWaitForSeconds = new WaitForSeconds(1);
@@ -186,12 +189,12 @@ public partial class GameManager : MonoBehaviour
 
                     if (loUnityWebRequest.result == UnityWebRequest.Result.Success)
                     {
-                        if (loPostResult != null) loPostResult.OnCompleted(loUnityWebRequest.downloadHandler.text);
+                        if (loPostResult != null) loPostResult.Succeed(loUnityWebRequest.downloadHandler.text);
                         loOnResult?.Invoke(true, loUnityWebRequest.downloadHandler.text);
                     }
                     else
                     {
-                        if (loPostResult != null) loPostResult.OnFailed(loUnityWebRequest.error);
+                        if (loPostResult != null) loPostResult.Failed(loUnityWebRequest.error);
                         loOnResult?.Invoke(false, loUnityWebRequest.error);
                     }
                 }
@@ -209,12 +212,12 @@ public partial class GameManager : MonoBehaviour
     /// <param name="loPostResult"></param>
     /// <param name="loParams"></param>
     /// <returns></returns>
-    public static IEnumerator LoadTexture2DAsync(string lcURL, UnityAction<Texture2D> loOnResult, CoroutineResult<Texture2D> loPostResult, params DTO2<string, string>[] loParams)
+    public static IEnumerator LoadTexture2DAsync(string lcURL, UnityAction<Texture2D> loOnResult, CoroutineResultValue<Texture2D> loPostResult, params DTO2<string, string>[] loParams)
     {
         //<< Revisamos si tenemos la textura ya cargada.
         if (goTextures2D.TryGetValue(lcURL, out Texture2D loTexture2D))
         {
-            if (loPostResult != null) loPostResult.OnCompleted(loTexture2D);
+            if (loPostResult != null) loPostResult.Succeed(loTexture2D);
             loOnResult?.Invoke(loTexture2D);
             yield break;
         }
@@ -226,7 +229,7 @@ public partial class GameManager : MonoBehaviour
             loTexture2D = new Texture2D(2, 2);
             loTexture2D.LoadImage(loImageData);
             goTextures2D.Add(lcURL, loTexture2D);
-            if (loPostResult != null) loPostResult.OnCompleted(loTexture2D);
+            if (loPostResult != null) loPostResult.Succeed(loTexture2D);
             loOnResult?.Invoke(loTexture2D);
             yield break;
         }
@@ -241,12 +244,12 @@ public partial class GameManager : MonoBehaviour
                 byte[] loPNGData = loTexture2D.EncodeToPNG();
                 File.WriteAllBytes(lcCachePath, loPNGData);
                 goTextures2D.Add(lcURL, loTexture2D);
-                if (loPostResult != null) loPostResult.OnCompleted(loTexture2D);
+                if (loPostResult != null) loPostResult.Succeed(loTexture2D);
                 loOnResult?.Invoke(loTexture2D);
             }
             else
             {
-                if (loPostResult != null) loPostResult.OnFailed();
+                if (loPostResult != null) loPostResult.Failed();
                 loOnResult?.Invoke(null);
             }
         }

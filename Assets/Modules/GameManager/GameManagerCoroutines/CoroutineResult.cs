@@ -1,17 +1,23 @@
-public class CoroutineResult<T> where T : class
+public class CoroutineResult
 {
-    public bool Completed = false;
-    public T Object = null;
+    public bool Completed { get; private set; } = false;
+    public bool Succeeded { get; private set; } = false;
 
-    public void OnCompleted(T loObject = null)
+    public void Succeed()
     {
         Completed = true;
-        Object = loObject;
+        Succeeded = true;
     }
 
-    public void OnFailed(T loObject = null)
+    public void Failed()
+    {
+        Completed = true;
+        Succeeded = false;
+    }
+
+    public void Reset()
     {
         Completed = false;
-        Object = loObject;
+        Succeeded = false;
     }
 }

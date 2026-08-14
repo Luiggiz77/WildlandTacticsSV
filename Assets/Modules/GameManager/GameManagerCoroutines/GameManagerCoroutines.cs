@@ -127,6 +127,7 @@ public partial class GameManager : MonoBehaviour
         }
 
         //<< Asignamos los datos de la coroutina.
+        loRunObject.Id = lcId;
         loRunObject.Callback = loCallback;
         loRunObject.CallbackParameter = loCallbackParameter;
         loRunObject.Instance = loInstance;
@@ -207,6 +208,7 @@ public partial class GameManager : MonoBehaviour
         //<< Corremos la corrutina hasta que termine.
         yield return loRunObject.Function;
         loRunObject.Callback?.Invoke(true, loRunObject.CallbackParameter);
+        goRuns.Remove(loRunObject.Id);
         loRunObject.Coroutine = null;
         yield break;
     }
