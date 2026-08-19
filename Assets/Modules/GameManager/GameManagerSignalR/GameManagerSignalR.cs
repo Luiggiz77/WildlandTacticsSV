@@ -5,8 +5,8 @@ using System.Collections;
 using System.Threading;
 using System.Collections.Concurrent;
 using System;
+using System.Collections.Generic;
 
-//<< https://www.youtube.com/watch?v=zmrw-ykTlDo
 public partial class GameManager : MonoBehaviour
 {
     /// <summary>
@@ -193,9 +193,9 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     /// <param name="loCommand"></param>
     /// <param name="lcJson"></param>
-    private void CarelessSend(SignalRCommand loCommand, string lcJson = "")
+    private void Send(SignalRCommand loCommand, string lcJson = "")
     {
-        _ = Task.Run(async () => await CarelessSendAsync(goHubConnection, loCommand, lcJson));
+        _ = Task.Run(async () => await SendAsync(goHubConnection, loCommand, lcJson));
     }
 
     /// <summary>
@@ -204,7 +204,7 @@ public partial class GameManager : MonoBehaviour
     /// <param name="loCommand"></param>
     /// <param name="lcJson"></param>
     /// <returns></returns>
-    private static async Task CarelessSendAsync(HubConnection loHubConnection, SignalRCommand loCommand, string lcJson = "")
+    private static async Task SendAsync(HubConnection loHubConnection, SignalRCommand loCommand, string lcJson = "")
     {
         try
         {
@@ -227,16 +227,33 @@ public partial class GameManager : MonoBehaviour
             Debug.Log($"{loMessage.Item1.ToString()}: {loMessage.Item2}");
             switch (loMessage.Item1)
             {
-                case SignalRCommand.RequestDistributionBoardId: CarelessSend(loMessage.Item1, JsonUtility.ToJson(new DTO1<int>(gnSelectedDistributionBoardId))); break;
+                //<< Nos indican que debemos reiniciar al estado de busqueda.
+                case SignalRCommand.Restart: break;
+                //<< Nos piden el id del tablero de distribución deseado.
+                case SignalRCommand.RequestDistributionBoardId: Send(loMessage.Item1, JsonUtility.ToJson(new DTO1<int>(gnSelectedDistributionBoardId))); break;
+
+                //<< Nos indican que nos estan mandando el tablero.
                 case SignalRCommand.Board:
                     {
                         //<< En este punto recibimos el tablero.
+                        Board<List<BoardUnit>> loBoard = (Board<List<BoardUnit>>)JsonUtility.FromJson(loMessage.Item2, typeof(Board<List<BoardUnit>>));
 
                         //<< Reenviamos mensaje con el mismo comando para indicar que recibimos y cargamos el tablero.
-                        CarelessSend(loMessage.Item1);
+                        Send(loMessage.Item1);
                     }
                     break;
-                default: break;
+                //<< Nos preguntan si debemos esperar al oponente, aqui si mandamos que no deseamos esperar al oponente.
+                case SignalRCommand.WaitForOpponent:
+                    //<< TODO: Meter el modal para preguntar si esperamos o no con respuesta.
+                    break;
+                case SignalRCommand.ShowBoard:
+                    break;
+                case SignalRCommand.SetTurn:
+                    break;
+
+                
+                default:
+                    break;
             }
         }
     }
