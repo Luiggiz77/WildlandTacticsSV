@@ -1,4 +1,7 @@
-﻿public class UnitGameplayEffect
+﻿using System;
+
+[Serializable]
+public class UnitGameplayEffect
 {
     public int UnitPropertiesId;
 

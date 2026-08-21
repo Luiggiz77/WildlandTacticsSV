@@ -236,7 +236,7 @@ public partial class GameManager : MonoBehaviour
                 case SignalRCommand.Board:
                     {
                         //<< En este punto recibimos el tablero.
-                        Board<List<BoardUnit>> loBoard = (Board<List<BoardUnit>>)JsonUtility.FromJson(loMessage.Item2, typeof(Board<List<BoardUnit>>));
+                        SetBoard((Board<List<BoardUnit>>)JsonUtility.FromJson(loMessage.Item2, typeof(Board<List<BoardUnit>>)));
 
                         //<< Reenviamos mensaje con el mismo comando para indicar que recibimos y cargamos el tablero.
                         Send(loMessage.Item1);

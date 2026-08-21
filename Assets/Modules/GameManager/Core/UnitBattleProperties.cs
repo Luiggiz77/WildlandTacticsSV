@@ -3,20 +3,7 @@
 [Serializable]
 public class UnitBattleProperties
 {
-    /// <summary>
-    /// Id de las propiedades..
-    /// </summary>
     public int Id = 0;
-
-    /// <summary>
-    /// Nombre original de la unidad.
-    /// </summary>
-    public string Name;
-
-    /// <summary>
-    /// Descripción de la unidad.
-    /// </summary>
-    public string Description;
 
     /// <summary>
     /// Puntos de vida de la unidad.

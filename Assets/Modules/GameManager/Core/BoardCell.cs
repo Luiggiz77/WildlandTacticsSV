@@ -3,8 +3,10 @@
 /// <summary>
 /// Se usa para los datos de la celda.
 /// </summary>
+[Serializable]
 public class BoardCell<T> where T : class
 {
+    [NonSerialized]
     public static readonly BoardCell<T> Blocked = new BoardCell<T>(-1, 0, 0);
 
     private class IndexDistance
@@ -16,26 +18,31 @@ public class BoardCell<T> where T : class
     /// <summary>
     /// Se usa para determinar las distancias entre celdas. Nota: Se usa estatico para evitar tanto GarbageCollector.
     /// </summary>
+    [NonSerialized]
     private static IndexDistance[] IndexDistances = new IndexDistance[5] { new IndexDistance(), new IndexDistance(), new IndexDistance(), new IndexDistance(), new IndexDistance() { Distance = float.MaxValue } };
 
     /// <summary>
     /// Indice de nuestra celda.
     /// </summary>
+    [NonSerialized]
     public int Index = 0;
 
     /// <summary>
     /// Coordenada en X de nuestra celda.
     /// </summary>
+    [NonSerialized]
     public int X = 0;
 
     /// <summary>
     /// Coordenada en Z de nuestra celda.
     /// </summary>
+    [NonSerialized]
     public int Z = 0;
 
     /// <summary>
     /// Cuando se obtiene un area de celdas este valor contiene la distancia apartir del centro del area requerida.
     /// </summary>
+    [NonSerialized]
     public int Distance = 0;
 
     /// <summary>
@@ -46,43 +53,54 @@ public class BoardCell<T> where T : class
     /// <summary>
     /// Frente
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> ZPos = Blocked;
     /// <summary>
     /// Atrás
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> ZNeg = Blocked;
     /// <summary>
     /// Izquierda
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> XNeg = Blocked;
     /// <summary>
     /// Derecha
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> XPos = Blocked;
 
     /// <summary>
     /// Diagonal frente izquierda
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> ZPosXNeg = Blocked;
     /// <summary>
     /// Diagonal frente derecha
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> ZPosXPos = Blocked;
 
     /// <summary>
     /// Diagonal atrás izquierda.
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> ZNegXNeg = Blocked;
 
     /// <summary>
     /// Diagonal atrás derecha.
     /// </summary>
+    [NonSerialized]
     public BoardCell<T> ZNegXPos = Blocked;
 
     /// <summary>
     /// Son las los alrededores de nuestra celda en cruz.
     /// </summary>
+    [NonSerialized]
     public BoardCell<T>[] Cross = new BoardCell<T>[4];
+
+    public BoardCell() { }
 
     /// <summary>
     /// Constructor.

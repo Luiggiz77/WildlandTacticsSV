@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+[Serializable]
 public class Board<T> where T : class
 {
     /// <summary>
@@ -47,6 +48,8 @@ public class Board<T> where T : class
     /// Arreglo de celdas que se usa para cuando se hacen peticiones de celdas.
     /// </summary>
     private BoardCell<T>[] goSelectedCells;
+
+    public Board() { }
 
     /// <summary>
     /// Constructor.

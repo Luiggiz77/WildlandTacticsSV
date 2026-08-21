@@ -4,17 +4,27 @@ using System;
 public class UnitProperties
 {
     /// <summary>
-    /// Llave de la configuración de la unidad.
+    /// Llave de las propiedades de la unidad.
     /// </summary>
     public int Id;
 
     /// <summary>
-    /// Llave de la plantilla de propiedades de la unidad en batalla usados.
+    /// Id de las propiedades de batalla.
     /// </summary>
     public int UnitBattlePropertiesId;
+
+    /// <summary>
+    /// Llave de la plantilla de propiedades de la unidad en batalla usados.
+    /// </summary>
+    public UnitBattleProperties UnitBattleProperties;
 
     /// <summary>
     /// Nombre de la unidad.
     /// </summary>
     public string Name;
+
+    /// <summary>
+    /// Elementos visuales de la unidad.
+    /// </summary>
+    public UnitVisualElement[] UnitVisualElements;
 }
