@@ -36,12 +36,12 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Handle de los unit instances.
     /// </summary>
-    private AsyncOperationHandle<IList<UnitInstance>> goUnitInstancesHandle;
+    private AsyncOperationHandle<IList<GameObject>> goUnitInstancesHandle;
 
     /// <summary>
     /// Handle de los unit elements.
     /// </summary>
-    private AsyncOperationHandle<IList<UnitElement>> goUnitElementsHandle;
+    private AsyncOperationHandle<IList<GameObject>> goUnitElementsHandle;
 
     /// <summary>
     /// Lista de unit instances que son partes que componen a las unidades, como cabeza, cuerpo, props, etc...
@@ -327,7 +327,7 @@ public partial class GameManager : MonoBehaviour
     {
         //<< Obtenemos las locaciones de las texturas.
         string[] loKeys = new string[] { nameof(UnitInstance) };
-        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Intersection, typeof(UnitInstance));
+        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Union);
         yield return loLocationsHandle;
 
         if (loLocationsHandle.Status == AsyncOperationStatus.Failed)
@@ -341,7 +341,7 @@ public partial class GameManager : MonoBehaviour
         IList<IResourceLocation> loLocations = loLocationsHandle.Result;
 
         //<< Obtenemos las texturas.
-        goUnitInstancesHandle = Addressables.LoadAssetsAsync<UnitInstance>(loLocations, null);
+        goUnitInstancesHandle = Addressables.LoadAssetsAsync<GameObject>(loLocations, null);
 
         yield return goUnitInstancesHandle;
 
@@ -357,9 +357,9 @@ public partial class GameManager : MonoBehaviour
         //<< Las locaciones y UnitInstances estan "emparejados".
         string[] loSplitString;
         int lnUnitAssetBundleId;
-        byte lnUnitAssetBundleType;
-        byte lnUnitFaction;
-        int lnUnitRole;
+        UnitAssetBundleType lnUnitAssetBundleType;
+        UnitFaction lnUnitFaction;
+        UnitRole lnUnitRole;
         string lcAttachTransformName;
         int lnCount = loLocations.Count;
         for (int i = 0; i < lnCount; i++)
@@ -369,19 +369,19 @@ public partial class GameManager : MonoBehaviour
 
             //<< Obtenemos los datos del UnitAssetBundle.
             if (!int.TryParse(loSplitString[0], out lnUnitAssetBundleId)) continue;
-            if (!byte.TryParse(loSplitString[1], out lnUnitAssetBundleType)) continue;
-            if (!byte.TryParse(loSplitString[2], out lnUnitFaction)) continue;
-            if (!int.TryParse(loSplitString[3], out lnUnitRole)) continue;
+            if (!Enum.TryParse(loSplitString[1], out lnUnitAssetBundleType)) continue;
+            if (!Enum.TryParse(loSplitString[2], out lnUnitFaction)) continue;
+            if (!Enum.TryParse(loSplitString[3], out lnUnitRole)) continue;
             lcAttachTransformName = loSplitString[4];
             if (lcAttachTransformName == "@@@@") lcAttachTransformName = string.Empty;
 
             //<< Creamos el AssetBundle.
             UnitAssetBundle loUnitAssetBundle = new UnitAssetBundle();
-            loUnitAssetBundle.Type = (UnitAssetBundleType)lnUnitAssetBundleType;
-            loUnitAssetBundle.Faction = (UnitFaction)lnUnitFaction;
-            loUnitAssetBundle.Role = (UnitRole)lnUnitRole;
+            loUnitAssetBundle.Type = lnUnitAssetBundleType;
+            loUnitAssetBundle.Faction = lnUnitFaction;
+            loUnitAssetBundle.Role = lnUnitRole;
             loUnitAssetBundle.AttachTransformName = lcAttachTransformName;
-            loUnitAssetBundle.unitInstance = goUnitInstancesHandle.Result[i];
+            loUnitAssetBundle.unitInstance = goUnitInstancesHandle.Result[i].GetComponentInChildren<UnitInstance>();
 
             //<< Agregamos el UnitInstance al asset bundle de id dado.
             goUnitAssetBundles.Add(lnUnitAssetBundleId, loUnitAssetBundle);
@@ -402,7 +402,7 @@ public partial class GameManager : MonoBehaviour
     {
         //<< Obtenemos las locaciones de las texturas.
         string[] loKeys = new string[] { nameof(UnitElement) };
-        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Intersection, typeof(UnitElement));
+        AsyncOperationHandle<IList<IResourceLocation>> loLocationsHandle = Addressables.LoadResourceLocationsAsync(loKeys, Addressables.MergeMode.Union);
         yield return loLocationsHandle;
 
         if (loLocationsHandle.Status == AsyncOperationStatus.Failed)
@@ -416,7 +416,7 @@ public partial class GameManager : MonoBehaviour
         IList<IResourceLocation> loLocations = loLocationsHandle.Result;
 
         //<< Obtenemos las texturas.
-        goUnitElementsHandle = Addressables.LoadAssetsAsync<UnitElement>(loLocations, null);
+        goUnitElementsHandle = Addressables.LoadAssetsAsync<GameObject>(loLocations, null);
 
         yield return goUnitElementsHandle;
 
@@ -432,9 +432,9 @@ public partial class GameManager : MonoBehaviour
         //<< Las locaciones y UnitElements estan "emparejados".
         string[] loSplitString;
         int lnUnitAssetBundleId;
-        byte lnUnitAssetBundleType;
-        byte lnUnitFaction;
-        int lnUnitRole;
+        UnitAssetBundleType lnUnitAssetBundleType;
+        UnitFaction lnUnitFaction;
+        UnitRole lnUnitRole;
         string lcAttachTransformName;
         int lnCount = loLocations.Count;
         for (int i = 0; i < lnCount; i++)
@@ -442,21 +442,24 @@ public partial class GameManager : MonoBehaviour
             loSplitString = loLocations[i].PrimaryKey.Split("_");
             if (loSplitString.Length < 5) continue;
 
+            //<< 5_Bow_Any_Archer_RightHand_End
+            //(Colors)Enum.Parse(typeof(Colors), "Red, Yellow");
+
             //<< Obtenemos los datos del UnitAssetBundle.
             if (!int.TryParse(loSplitString[0], out lnUnitAssetBundleId)) continue;
-            if (!byte.TryParse(loSplitString[1], out lnUnitAssetBundleType)) continue;
-            if (!byte.TryParse(loSplitString[2], out lnUnitFaction)) continue;
-            if (!int.TryParse(loSplitString[3], out lnUnitRole)) continue;
+            if (!Enum.TryParse(loSplitString[1], out lnUnitAssetBundleType)) continue;
+            if (!Enum.TryParse(loSplitString[2], out lnUnitFaction)) continue;
+            if (!Enum.TryParse(loSplitString[3], out lnUnitRole)) continue;
             lcAttachTransformName = loSplitString[4];
             if (lcAttachTransformName == "@@@@") lcAttachTransformName = string.Empty;
 
             //<< Creamos el AssetBundle.
             UnitAssetBundle loUnitAssetBundle = new UnitAssetBundle();
-            loUnitAssetBundle.Type = (UnitAssetBundleType)lnUnitAssetBundleType;
-            loUnitAssetBundle.Faction = (UnitFaction)lnUnitFaction;
-            loUnitAssetBundle.Role = (UnitRole)lnUnitRole;
+            loUnitAssetBundle.Type = lnUnitAssetBundleType;
+            loUnitAssetBundle.Faction = lnUnitFaction;
+            loUnitAssetBundle.Role = lnUnitRole;
             loUnitAssetBundle.AttachTransformName = lcAttachTransformName;
-            loUnitAssetBundle.unitElement = goUnitElementsHandle.Result[i];
+            loUnitAssetBundle.unitElement = goUnitElementsHandle.Result[i].GetComponentInChildren<UnitElement>();
 
             //<< Agregamos el UnitInstance al asset bundle de id dado.
             goUnitAssetBundles.Add(lnUnitAssetBundleId, loUnitAssetBundle);
