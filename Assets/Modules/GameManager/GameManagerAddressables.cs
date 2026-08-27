@@ -95,6 +95,12 @@ public partial class GameManager : MonoBehaviour
 
         //<< Cargamos los UnitAssetBundles (UnitElements) en memoria.
         yield return RunManagedWhile(LoadUnitAssetBundles_UnitElement(loCoroutineResult), loCoroutineResult);
+
+        //<< FINDME TEST
+        UnitProperties loUnitProperties = new UnitProperties();
+        loUnitProperties.UnitBattleProperties = new UnitBattleProperties() { Role = UnitRole.Mage };
+        loUnitProperties.UnitVisualElements = new UnitVisualElement[] { new UnitVisualElement { UnitAssetBundleId = 8 }, new UnitVisualElement { UnitAssetBundleId = 19 } };
+        CreateUnitInstance(loUnitProperties, UnitFaction.Dog);
     }
 
     /// <summary>
@@ -294,7 +300,7 @@ public partial class GameManager : MonoBehaviour
         int lnCount = loLocations.Count;
         for (int i = 0; i < lnCount; i++)
         {
-            loSplitString = loLocations[i].PrimaryKey.Split("_");
+            loSplitString = loLocations[i].PrimaryKey.Split("&");
             if (loSplitString.Length < 3) continue;
             if (!int.TryParse(loSplitString[0], out lnUsage)) continue;
             if (!int.TryParse(loSplitString[1], out lnKey)) continue;
@@ -364,7 +370,7 @@ public partial class GameManager : MonoBehaviour
         int lnCount = loLocations.Count;
         for (int i = 0; i < lnCount; i++)
         {
-            loSplitString = loLocations[i].PrimaryKey.Split("_");
+            loSplitString = loLocations[i].PrimaryKey.Split("&");
             if (loSplitString.Length < 5) continue;
 
             //<< Obtenemos los datos del UnitAssetBundle.
@@ -439,7 +445,7 @@ public partial class GameManager : MonoBehaviour
         int lnCount = loLocations.Count;
         for (int i = 0; i < lnCount; i++)
         {
-            loSplitString = loLocations[i].PrimaryKey.Split("_");
+            loSplitString = loLocations[i].PrimaryKey.Split("&");
             if (loSplitString.Length < 5) continue;
 
             //<< 5_Bow_Any_Archer_RightHand_End

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public partial class GameManager : MonoBehaviour
@@ -8,7 +9,7 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     /// <param name="lnUnitStoredPropertiesId"></param>
     /// <returns></returns>
-    private UnitInstance CreateUnitInstance(UnitProperties loUnitProperties, IEnumerable<UnitVisualElement> loUnitVisualElements = null)
+    private UnitInstance CreateUnitInstance(UnitProperties loUnitProperties, UnitFaction loFaction = UnitFaction.Any, IEnumerable<UnitVisualElement> loUnitVisualElements = null)
     {
         //<< Obtenemos solo las partes visuales de nuestra unidad.
         if (loUnitVisualElements == null) loUnitVisualElements = loUnitProperties.UnitVisualElements;
@@ -19,8 +20,8 @@ public partial class GameManager : MonoBehaviour
         UnitAssetBundle loUnitAssetBundleBody = null;
         foreach (UnitVisualElement loItem in loUnitVisualElements)
         {
-            if(!goUnitAssetBundles.TryGetValue(loItem.UnitAssetBundleId, out loUnitAssetBundle)) continue;
-            if (loUnitAssetBundleBody.Type != UnitAssetBundleType.Body) continue;
+            if (!goUnitAssetBundles.TryGetValue(loItem.UnitAssetBundleId, out loUnitAssetBundle)) continue;
+            if (loUnitAssetBundle.Type != UnitAssetBundleType.Body) continue;
             loUnitAssetBundleBody = loUnitAssetBundle;
             break;
         }
@@ -28,28 +29,24 @@ public partial class GameManager : MonoBehaviour
         //<< Ya con el cuerpo creamos una instancia usando el prefab.
         UnitInstance loUnitInstance = Spawn(loUnitAssetBundleBody.unitInstance.GetHashCode(), loUnitAssetBundleBody.unitInstance);
 
+        //<< Buscamos la cabeza con base en la facción.
+        if (loFaction != UnitFaction.Any)
+        {
+            loUnitAssetBundle = goUnitAssetBundles.Values.Where(x => x.Faction == loFaction && x.Type == UnitAssetBundleType.Head).FirstOrDefault();
+            //<< Si no se pudo obtener la cabeza por facción intentamos cualquier cabeza.
+            if (loUnitAssetBundle == null) loUnitAssetBundle = goUnitAssetBundles.Values.Where(x => x.Type == UnitAssetBundleType.Head).FirstOrDefault();
+            //<< Si se obtuvo cabeza la agregamos.
+            if (loUnitAssetBundle != null) AddUnitAssetBundle(loUnitInstance, loUnitAssetBundle, loUnitInstance.headAttach);
+        }
+
         //<< Para cada elemento que no sea cuerpo...
-        UnitElement loUnitElement;
         foreach (UnitVisualElement loItem in loUnitVisualElements)
         {
             if (!goUnitAssetBundles.TryGetValue(loItem.UnitAssetBundleId, out loUnitAssetBundle)) continue;
-            if (loUnitAssetBundle.Type == UnitAssetBundleType.Body) continue;
+            if (loUnitAssetBundle.Type == UnitAssetBundleType.Body || loUnitAssetBundle.Type == UnitAssetBundleType.Head) continue;
 
             //<< Creamos instancia del elemento y lo agregamos a nuestra lista de elementos visuales.
-            loUnitElement = Spawn(loUnitAssetBundle.unitElement.GetHashCode(), loUnitAssetBundle.unitElement);
-            loUnitInstance.UnitElements.Add(loUnitElement);
-
-            //<< Asignamos su padre con base en el tipo de elemento y lado de la unidad.
-            Transform loParent = loUnitInstance.transform;
-            if (!string.IsNullOrWhiteSpace(loUnitAssetBundle.AttachTransformName))
-            {
-                Transform loFound = loUnitInstance.transform.FindNearest(loUnitAssetBundle.AttachTransformName);
-                if (loFound != null) loParent = loFound;
-            }
-            loUnitElement.transform.SetParent(loParent, true);
-
-            loUnitElement.transform.localPosition = Vector3.zero;
-            loUnitElement.transform.localRotation = Quaternion.identity;
+            AddUnitAssetBundle(loUnitInstance, loUnitAssetBundle);
         }
 
         //<< Establecemos el nombre como el id de la unidad.
@@ -127,5 +124,27 @@ public partial class GameManager : MonoBehaviour
 
         //<< Regresamos la instancia para tener control sobre la misma.
         return loUnitInstance;
+    }
+
+    private static void AddUnitAssetBundle(UnitInstance loUnitInstance, UnitAssetBundle loUnitAssetBundle, Transform loParent = null)
+    {
+        //<< Creamos instancia del elemento y lo agregamos a nuestra lista de elementos visuales.
+        UnitElement loUnitElement = Spawn(loUnitAssetBundle.unitElement.GetHashCode(), loUnitAssetBundle.unitElement);
+        loUnitInstance.UnitElements.Add(loUnitElement);
+
+        //<< Asignamos su padre con base en el tipo de elemento y lado de la unidad.
+        if (loParent == null)
+        {
+            loParent = loUnitInstance.transform;
+            if (!string.IsNullOrWhiteSpace(loUnitAssetBundle.AttachTransformName))
+            {
+                Transform loFound = loUnitInstance.transform.FindNearest(loUnitAssetBundle.AttachTransformName);
+                if (loFound != null) loParent = loFound;
+            }
+        }
+        loUnitElement.transform.SetParent(loParent, true);
+
+        loUnitElement.transform.localPosition = Vector3.zero;
+        loUnitElement.transform.localRotation = Quaternion.identity;
     }
 }
