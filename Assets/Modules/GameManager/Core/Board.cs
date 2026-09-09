@@ -30,6 +30,16 @@ public class Board<T> where T : class
     public int UserIdB;
 
     /// <summary>
+    /// Facción del jugador A
+    /// </summary>
+    public UnitFaction FactionUserA;
+
+    /// <summary>
+    /// Facción del jugador B
+    /// </summary>
+    public UnitFaction FactionUserB;
+
+    /// <summary>
     /// Ancho del mapa (cuadrantes).
     /// </summary>
     public int Width;
@@ -214,6 +224,55 @@ public class Board<T> where T : class
         }
 
         return loBoardCells.ToArray();
+    }
+
+    public void ConnectBoard()
+    {
+        //<< Creamos las instancias.
+        BoardCell<T> loBoardCell;
+        int lnIndex = 0;
+        for (int x = 0; x < Width; x++)
+        {
+            for (int z = 0; z < Lenght; z++)
+            {
+                lnIndex = CellIndexOf(x, z);
+                loBoardCell = BoardCells[lnIndex];
+                loBoardCell.X = x;
+                loBoardCell.Z = z;
+                loBoardCell.Index = lnIndex;
+            }
+        }
+
+        //<< Conectamos al frente y atrás.
+        for (int x = 0; x < Width; x++)
+        {
+            //<< Conectamos Z+
+            for (int z = 0; z < Lenght - 1; z++) BoardCells[CellIndexOf(x, z)].ZPos = BoardCells[CellIndexOf(x, z + 1)];
+
+            //<< Conectamos Z-
+            for (int z = Lenght - 1; z >= 1; z--) BoardCells[CellIndexOf(x, z)].ZNeg = BoardCells[CellIndexOf(x, z - 1)];
+        }
+
+        //<< Conectamos laterales.
+        for (int z = 0; z < Lenght; z++)
+        {
+            //<< Conectamos X+
+            for (int x = 0; x < Width - 1; x++) BoardCells[CellIndexOf(x, z)].XPos = BoardCells[CellIndexOf(x + 1, z)];
+
+            //<< Conectamos X-
+            for (int x = Width - 1; x >= 1; x--) BoardCells[CellIndexOf(x, z)].XNeg = BoardCells[CellIndexOf(x - 1, z)];
+        }
+
+        //<< Conectamos todas las diagnonales.
+        for (int x = 0; x < Width; x++)
+        {
+            for (int z = 0; z < Lenght; z++)
+            {
+                loBoardCell = BoardCells[CellIndexOf(x, z)];
+                ConnectCross(loBoardCell);
+                ConnectDiagonal(loBoardCell);
+            }
+        }
     }
 
     /// <summary>

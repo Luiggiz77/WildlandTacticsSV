@@ -54,6 +54,7 @@ public partial class GameManager : MonoBehaviour
     private void SetBoard(Board<List<BoardUnit>> loBoard)
     {
         goBoard = loBoard;
+        goBoard.ConnectBoard();
 
         //<< Creamos el grid del tablero.
         CreateGridAndChecker(loBoard.Width, loBoard.Lenght);
@@ -61,15 +62,23 @@ public partial class GameManager : MonoBehaviour
         //<< Creamos las celdas de selección.
         CreateSelectionCells(goBoardProperties.boardWidht, goBoardProperties.boardLenght);
 
+        Dictionary<int, UnitFaction> loFactions = new Dictionary<int, UnitFaction>();
+        loFactions.Add(0, UnitFaction.Any);
+        loFactions.Add(loBoard.UserIdA, loBoard.FactionUserA);
+        loFactions.Add(loBoard.UserIdB, loBoard.FactionUserB);
+
         //<< Instanciamos y posicionamos las unidades del tablero.
         UnitInstance loUnitInstance;
+        UnitFaction loFaction;
         BoardCell<List<BoardUnit>>[] loCells = loBoard.GetCells();
         foreach (BoardCell<List<BoardUnit>> loCell in loCells)
         {
             foreach (BoardUnit loBoardUnit in loCell.Data)
             {
+                if(!loFactions.TryGetValue(loBoardUnit.UserId, out loFaction)) loFaction = UnitFaction.Any;
+
                 //<< Creamos la unidad con base en sus elementos visuales.
-                loUnitInstance = CreateUnitInstance(loBoardUnit.UnitProperties);
+                loUnitInstance = CreateUnitInstance(loBoardUnit.UnitProperties, loFaction);
 
                 //<< Establecemos padre y posicion.
                 loUnitInstance.transform.SetParent(boardParent);

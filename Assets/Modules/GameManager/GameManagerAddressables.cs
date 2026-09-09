@@ -95,12 +95,6 @@ public partial class GameManager : MonoBehaviour
 
         //<< Cargamos los UnitAssetBundles (UnitElements) en memoria.
         yield return RunManagedWhile(LoadUnitAssetBundles_UnitElement(loCoroutineResult), loCoroutineResult);
-
-        //<< FINDME TEST
-        UnitProperties loUnitProperties = new UnitProperties();
-        loUnitProperties.UnitBattleProperties = new UnitBattleProperties() { Role = UnitRole.Mage };
-        loUnitProperties.UnitVisualElements = new UnitVisualElement[] { new UnitVisualElement { UnitAssetBundleId = 8 }, new UnitVisualElement { UnitAssetBundleId = 19 } };
-        CreateUnitInstance(loUnitProperties, UnitFaction.Dog);
     }
 
     /// <summary>

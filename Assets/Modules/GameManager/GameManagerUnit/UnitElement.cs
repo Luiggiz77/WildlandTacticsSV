@@ -32,35 +32,42 @@ public class UnitElement : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        goMaterials = new Material[renderers.Length][];
-        goSharedMaterials = new Material[renderers.Length][];
-        goOutlineMaterials = new Material[selectionOutlined.Length][];
+        //int lnCount = renderers.Length;
+        //for (int i = lnCount - 1; i >= 0; i--)
+        //{
+        //    if (renderers[i] != null) continue;
+        //        lnCount = 0;
+        //    break;
+        //}
 
-        //<< Creamos copia de los materiales originales y creamos una copia para los de selección.
-        int lnCount = renderers.Length;
-        for (int i = 0; i < lnCount; i++)
-        {
-            //<< Guardardamos shared ORIGINAL.
-            goSharedMaterials[i] = renderers[i].sharedMaterials.Clone() as Material[];
+        //goMaterials = new Material[lnCount][];
+        //goSharedMaterials = new Material[lnCount][];
+        //goOutlineMaterials = new Material[selectionOutlined.Length][];
 
-            //<< Creamos INSTANCIAS reales para runtime.
-            var shared = renderers[i].sharedMaterials;
-            var instanced = new Material[shared.Length];
+        ////<< Creamos copia de los materiales originales y creamos una copia para los de selección.
+        //for (int i = 0; i < lnCount; i++)
+        //{
+        //    //<< Guardardamos shared ORIGINAL.
+        //    goSharedMaterials[i] = renderers[i].sharedMaterials.Clone() as Material[];
 
-            for (int m = 0; m < shared.Length; m++) instanced[m] = new Material(shared[m]);
+        //    //<< Creamos INSTANCIAS reales para runtime.
+        //    var shared = renderers[i].sharedMaterials;
+        //    var instanced = new Material[shared.Length];
 
-            renderers[i].materials = instanced;
-            goMaterials[i] = instanced;
-        }
+        //    for (int m = 0; m < shared.Length; m++) instanced[m] = new Material(shared[m]);
 
-        int lnIndexOf;
-        lnCount = selectionOutlined.Length;
-        for (int i = 0; i < lnCount; i++)
-        {
-            lnIndexOf = System.Array.IndexOf(renderers, selectionOutlined[i]);
-            if (lnIndexOf > -1) goOutlineMaterials[i] = goMaterials[lnIndexOf];
-            else goOutlineMaterials[i] = selectionOutlined[i].materials.Clone() as Material[];
-        }
+        //    renderers[i].materials = instanced;
+        //    goMaterials[i] = instanced;
+        //}
+
+        //int lnIndexOf;
+        //lnCount = selectionOutlined.Length;
+        //for (int i = 0; i < lnCount; i++)
+        //{
+        //    lnIndexOf = System.Array.IndexOf(renderers, selectionOutlined[i]);
+        //    if (lnIndexOf > -1) goOutlineMaterials[i] = goMaterials[lnIndexOf];
+        //    else goOutlineMaterials[i] = selectionOutlined[i].materials.Clone() as Material[];
+        //}
     }
 
     /// <summary>

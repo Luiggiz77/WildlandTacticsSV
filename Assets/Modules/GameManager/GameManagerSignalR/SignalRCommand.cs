@@ -25,4 +25,8 @@ public enum SignalRCommand : uint
     /// Es para indicar de quien es el turno.
     /// </summary>
     SetTurn = 6,
+    /// <summary>
+    /// Indica que quiere salir voluntariamente.
+    /// </summary>
+    Quit = 7,
 }

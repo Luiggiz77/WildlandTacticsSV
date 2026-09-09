@@ -61,6 +61,7 @@ public class UIModal : UIView
                 goResult = loParams.Length > 4 ? (CoroutineResult)loParams[4] : null;
                 if (goResult != null) goResult.Reset();
                 panel.SetActive(true);
+                transform.SetAsLastSibling();
                 break;
             default: break;
         }

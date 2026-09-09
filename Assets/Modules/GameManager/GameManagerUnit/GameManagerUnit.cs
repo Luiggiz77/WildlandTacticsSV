@@ -29,13 +29,18 @@ public partial class GameManager : MonoBehaviour
         //<< Ya con el cuerpo creamos una instancia usando el prefab.
         UnitInstance loUnitInstance = Spawn(loUnitAssetBundleBody.unitInstance.GetHashCode(), loUnitAssetBundleBody.unitInstance);
 
-        //<< Buscamos la cabeza con base en la facción.
+        //<< Buscamos la cabeza y la cola con base en la facción.
         if (loFaction != UnitFaction.Any)
         {
             loUnitAssetBundle = goUnitAssetBundles.Values.Where(x => x.Faction == loFaction && x.Type == UnitAssetBundleType.Head).FirstOrDefault();
             //<< Si no se pudo obtener la cabeza por facción intentamos cualquier cabeza.
             if (loUnitAssetBundle == null) loUnitAssetBundle = goUnitAssetBundles.Values.Where(x => x.Type == UnitAssetBundleType.Head).FirstOrDefault();
             //<< Si se obtuvo cabeza la agregamos.
+            if (loUnitAssetBundle != null) AddUnitAssetBundle(loUnitInstance, loUnitAssetBundle, loUnitInstance.headAttach);
+
+            //<< Buscamos cola de tener.
+            loUnitAssetBundle = goUnitAssetBundles.Values.Where(x => x.Faction == loFaction && x.Type == UnitAssetBundleType.Tail).FirstOrDefault();
+            //<< Si se obtuvo cola la agregamos.
             if (loUnitAssetBundle != null) AddUnitAssetBundle(loUnitInstance, loUnitAssetBundle, loUnitInstance.headAttach);
         }
 

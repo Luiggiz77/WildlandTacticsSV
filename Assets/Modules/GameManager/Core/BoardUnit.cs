@@ -5,6 +5,11 @@ using System.Collections.Generic;
 public class BoardUnit
 {
     /// <summary>
+    /// Id del jugador a quien pertenece.
+    /// </summary>
+    public int UserId = 0;
+
+    /// <summary>
     /// Indica la vida maxima actual de la unidad.
     /// </summary>
     public int HealthMax = 0;

@@ -410,7 +410,7 @@ public enum GameCommand : int
 
     /// <summary>
     /// Mostrar la pantalla de carga para realizar una corrutina de otra interfaz u objeto que lo requiera.
-    /// param[0] = IEnumerator loCoroutine - Es la corrutina que debe ejecutarse en la pantalla de carga.
+    /// param[0] = bool lbBackground - Nos indica si debe ser con fondo o sin fondo.
     /// </summary>
     ShowUILoading,
 
@@ -556,7 +556,7 @@ public enum GameCommand : int
     /// <summary>
     /// Mostrar la pantalla de emparejamiento para batalla.
     /// </summary>
-    ShowUIMatching,
+    ShowUIPairing,
 
     /// <summary>
     /// Mostrar la pantalla de preparación de combate.
@@ -594,6 +594,16 @@ public enum GameCommand : int
     HideUIDownloading,
 
     /// <summary>
+    /// Se llama para ocultar la pantalla de carga.
+    /// </summary>
+    HideUILoading,
+
+    /// <summary>
+    /// Ocultar la pantalla de emparejamiento para batalla.
+    /// </summary>
+    HideUIPairing,
+
+    /// <summary>
     /// Se llama para ocultar el bondo de la interfaz.
     /// </summary>
     HideUIBackground,
@@ -618,5 +628,10 @@ public enum GameCommand : int
     /// param[0] = SoundType loSoundType - Indica el tipo de sonido a reproducir.
     /// </summary>
     PlaySound,
+
+    /// <summary>
+    /// Indica que debemos detener el emparejamiento.
+    /// </summary>
+    CancelPairing,
     #endregion
 }

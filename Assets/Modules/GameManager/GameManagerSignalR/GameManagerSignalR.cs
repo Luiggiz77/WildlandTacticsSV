@@ -56,13 +56,43 @@ public partial class GameManager : MonoBehaviour
                 gnSelectedDistributionBoardId = (int)loParams[0];
                 FindMatch(); 
                 break;
+
+            case GameCommand.CancelPairing: StartCoroutine(CancelPairing()); break;
             default: break;
         }
     }
 
+    /// <summary>
+    /// Para encontrar batalla.
+    /// </summary>
     private void FindMatch()
     {
         StartCoroutine(StartSignalR());
+    }
+
+    /// <summary>
+    /// Para cancelar emparejamiento.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator CancelPairing()
+    {
+        //<< Mostramos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.ShowUILoading, true);
+
+        //<< Si estamos conectados mandamos mensaje de que deseamos desconectarnos.
+        if (goHubConnection != null && goHubConnection.State == HubConnectionState.Connected)
+        {
+            Task loTaskQuitMessage = Task.Run(async () => await SendAsync(goHubConnection, SignalRCommand.Quit, string.Empty));
+            while (!loTaskQuitMessage.IsCompleted) yield return null;
+        }
+
+        //<< Liberamos conexión.
+        yield return CancelSignalR();
+
+        //<< Ocultamos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.HideUILoading);
+        GameManager.Send(GameCommand.HideUIPairing);
+        GameManager.Send(GameCommand.ShowUICombatPreparation);
     }
 
     /// <summary>
@@ -87,6 +117,9 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     private IEnumerator StartSignalR()
     {
+        //<< Mostramos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.ShowUILoading, true);
+
         while (true)
         {
             //<< Si tenemos un task previo cancelamos y esperamos la salida.
@@ -99,12 +132,14 @@ public partial class GameManager : MonoBehaviour
             //<< Si no se pudo hacer login avisamos y preguntamos si deseamos reintentar.
             if (!loCoroutineResult.Succeeded)
             {
-                GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, null, loCoroutineResult);
+                GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Cancel), null, loCoroutineResult);
 
                 while (!loCoroutineResult.Completed) yield return null;
 
                 if (loCoroutineResult.Succeeded) continue;
 
+                //<< Ocultamos pantalla de carga con fondo.
+                GameManager.Send(GameCommand.HideUILoading);
                 yield break;
             }
 
@@ -117,17 +152,25 @@ public partial class GameManager : MonoBehaviour
             //<< Revisamos si hubo algún error.
             if (loValueTask.Result == null)
             {
-                GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), null, null, loCoroutineResult);
+                GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Error, (int)GameTextError.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Retry), GameManager.GetText(GameTextUsage.Word, (int)GameTextWord.Cancel), null, loCoroutineResult);
 
                 while (!loCoroutineResult.Completed) yield return null;
 
                 if (loCoroutineResult.Succeeded) continue;
 
+                //<< Ocultamos pantalla de carga con fondo.
+                GameManager.Send(GameCommand.HideUILoading);
                 yield break;
             }
 
             //<< Asignamos la conexión para liberarla mas adelante al salir.
             goHubConnection = loValueTask.Result;
+
+            //<< Ocultamos pantalla de carga con fondo.
+            GameManager.Send(GameCommand.HideUILoading);
+
+            //<< Mostramos pantalla de emparejamiento.
+            GameManager.Send(GameCommand.ShowUIPairing);
 
             yield break;
         }
@@ -244,11 +287,32 @@ public partial class GameManager : MonoBehaviour
                     break;
                 //<< Nos preguntan si debemos esperar al oponente, aqui si mandamos que no deseamos esperar al oponente.
                 case SignalRCommand.WaitForOpponent:
-                    //<< TODO: Meter el modal para preguntar si esperamos o no con respuesta.
+                    //<< TODO: Mandar mensaje de texto de usuario tardando.
                     break;
+                //<< Nos indican que debemos mostrar ya el tablero y ocultar pantalla de carga.
                 case SignalRCommand.ShowBoard:
+                    //<< Ocultamos pantalla de emparejamiento.
+                    GameManager.Send(GameCommand.HideUIPairing);
+
+                    //<< Reenviamos mensaje con el mismo comando para indicar que recibimos y que ya mostramos el tablero.
+                    Send(loMessage.Item1);
                     break;
+                //<< Nos indican que hay un cambio de turno.
                 case SignalRCommand.SetTurn:
+                    {
+                        //<< Recibimos el turno y el timer.
+                        DTO2<int, uint> loTurn = (DTO2<int, uint>)JsonUtility.FromJson(loMessage.Item2, typeof(DTO2<int, uint>));
+
+                        //<< Mostramos los elementos del UIy corremos el timer.
+                        //GameManager.Send(GameCommand.ShowUICombatTurn);
+
+                        //<< Se muestra algo indicando que es nuestro turno?
+                        //<< Que se oculta o muestra durante el turno?
+                        //UI Combate
+
+                        //<< Se muestra algo indicando que es nuestro turno? 
+                        //<< Que se oculta o muestra durante el turno? Botones, terminar,
+                    }
                     break;
 
                 

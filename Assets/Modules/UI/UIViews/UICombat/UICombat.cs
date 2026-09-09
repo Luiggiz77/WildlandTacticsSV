@@ -1,19 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class UIMatching : UIView
+public class UICombat : UIView
 {
     /// <summary>
-    /// OnGameCommand
+    /// Para recibir comandos.
     /// </summary>
-    /// <param name="lcCommand"></param>
+    /// <param name="loCommand"></param>
     /// <param name="loParams"></param>
     protected override void OnGameCommand(GameCommand loCommand, params object[] loParams)
     {
         switch (loCommand)
         {
-            case GameCommand.ShowUIMatching: panel.SetActive(true); break;
             default: break;
         }
     }

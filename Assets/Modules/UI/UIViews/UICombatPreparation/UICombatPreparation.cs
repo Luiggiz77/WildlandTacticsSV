@@ -346,22 +346,8 @@ public class UICombatPreparation : UIView
         panel.gameObject.SetActive(false);
         GameManager.Send(GameCommand.PlaySound, SoundType.ButtonBack);
 
-        //<< En esta seccion pasamos a pantalla de "Buscando Combate" ó "Iniciando combate" dependiendo de si es IA o Buscar jugador.
-
-        //<< Si hay un error o pasa demasiado tiempo que regrese?
-
-        //<< Cada 3 segundos debe existir un heartbeat para saber que el usuario sigue interesado en el combate, se pone un timeflag en servidor.
-        //<< El usuario manda el id de su tablero de distribución a usar así como los items que usará al inicio del combate.
-
-        //<< Una ves que ambos contrincantes se seleccionaron para el match se configura y guarda el tablero en base de datos.
-
-        //<< Ya con el tablero guardado les mandamos mensaje a los jugadores con signal R de ser posible para darles los datos del tablero.
-
-        //<< Cada jugador saca del tablero los datos de las unidades para generarlas.
-
-        //<< Se les da unos segundos de carga para que puedan generar sus mapas.
-
-        //<< Una ves que los jugadores están listos se elige el turno con base en los items usados.
+        //<< TODO: En esta seccion pasamos a pantalla de "Buscando Combate" ó "Iniciando combate" dependiendo de si es IA o Buscar jugador.
+        //<< FINDME Temporalmente se pasa directo a batalla en linea.
 
         //<< Obtenemos el id del tablero que se usará.
         int lnDistributionBoardId = goDistributionBoardsIds[gnSelectedDistributionBoardIndex];
