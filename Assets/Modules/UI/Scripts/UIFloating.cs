@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 public class UIFloating : MonoBehaviour, IDragHandler, IPointerDownHandler
 {
@@ -9,13 +8,13 @@ public class UIFloating : MonoBehaviour, IDragHandler, IPointerDownHandler
     [Tooltip("Canvas al que pertenecemos")]
     public Canvas canvas;
     [Tooltip("RectTransform del Canvas al que pertenecemos")]
-    public RectTransform canvasRectTransform;
+    public RectTransform panelRectTransform;
     [Tooltip("Se usa para activar o desactivar el raycast sobre todo el elemento y no activar botones u otros elementos del menú a la hora de modificar su posición.")]
-    public Graphic raycastBlocker;
+    public CanvasGroup handles;
     [Tooltip("Esquina superior izquierda para mover.")]
-    public RectTransform dragHandle;
+    public RectTransform[] dragHandles;
     [Tooltip("Esquina inferior derecha para redimensionar.")]
-    public RectTransform resizeHandle;
+    public RectTransform[] resizeHandles;
 
     [Tooltip("Límites de Tamaño minimo")]
     public Vector2 minSize = new Vector2(200f, 150f);
@@ -26,6 +25,14 @@ public class UIFloating : MonoBehaviour, IDragHandler, IPointerDownHandler
     public bool restrictToScreen = true;
     [Tooltip("Margen mínimo visible en pixeles cuando choca con un borde.")]
     public float screenEdgePadding = 50f;
+
+    /// <summary>
+    /// Awake
+    /// </summary>
+    private void Awake()
+    {
+        
+    }
 
     /// <summary>
     /// OnPointerDown
@@ -44,8 +51,24 @@ public class UIFloating : MonoBehaviour, IDragHandler, IPointerDownHandler
     {
         if (canvas == null) return;
 
-        if (resizeHandle != null && RectTransformUtility.RectangleContainsScreenPoint(resizeHandle, loEventData.position, canvas.worldCamera)) Resize(loEventData);
-        else if (dragHandle == null || RectTransformUtility.RectangleContainsScreenPoint(dragHandle, loEventData.position, canvas.worldCamera)) Move(loEventData);
+        if (resizeHandles != null && RectangleContainsScreenPoint(resizeHandles, loEventData.position, canvas.worldCamera)) Resize(loEventData);
+        else if (dragHandles == null || RectangleContainsScreenPoint(dragHandles, loEventData.position, canvas.worldCamera)) Move(loEventData);
+    }
+
+    /// <summary>
+    /// Modo loop.
+    /// </summary>
+    /// <param name="loRectTransforms"></param>
+    /// <param name="loScreenPoint"></param>
+    /// <param name="loCamera"></param>
+    /// <returns></returns>
+    private static bool RectangleContainsScreenPoint(RectTransform[] loRectTransforms, Vector2 loScreenPoint, Camera loCamera)
+    {
+        foreach (RectTransform loItem in loRectTransforms)
+        {
+            if (RectTransformUtility.RectangleContainsScreenPoint(loItem, loScreenPoint, loCamera)) return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -61,8 +84,8 @@ public class UIFloating : MonoBehaviour, IDragHandler, IPointerDownHandler
         }
         else
         {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRectTransform, loPointerEventData.position, canvas.worldCamera, out var loLocalPoint);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRectTransform, loPointerEventData.position - loPointerEventData.delta, canvas.worldCamera, out var loOldLocalPoint);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRectTransform, loPointerEventData.position, canvas.worldCamera, out var loLocalPoint);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRectTransform, loPointerEventData.position - loPointerEventData.delta, canvas.worldCamera, out var loOldLocalPoint);
             loMoveDelta = loLocalPoint - loOldLocalPoint;
         }
 
@@ -94,9 +117,9 @@ public class UIFloating : MonoBehaviour, IDragHandler, IPointerDownHandler
     /// </summary>
     private void ApplyScreenConstraints()
     {
-        if (canvasRectTransform == null) return;
+        if (panelRectTransform == null) return;
 
-        Vector2 loCanvasSize = canvasRectTransform.rect.size;
+        Vector2 loCanvasSize = panelRectTransform.rect.size;
         Vector2 loCurrentSize = rectTransform.rect.size;
         Vector2 loPivot = rectTransform.pivot;
         Vector2 loAnchoredPos = rectTransform.anchoredPosition;
