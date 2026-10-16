@@ -4,23 +4,34 @@
 public enum GameCommand : int
 {
     /// <summary>
+    /// Se llama para iniciar el timer de la partida.
+    /// param[0] = int lnTime - Es el tiempo de la partida en milisegundos.
+    /// </summary>
+    StartTimer,
+
+    /// <summary>
+    /// Se llama para indicar que es nuestro turno.
+    /// param[0] = int lnTime - Es el tiempo de nuestro turno en milisegundos.
+    /// </summary>
+    SetTurn,
+
+    /// <summary>
+    /// Se llama para indicar que es turno del oponente.
+    /// param[0] = int lnTime - Es el tiempo del turno del oponente en milisegundos.
+    /// </summary>
+    SetTurnOpponent,
+
+    /// <summary>
+    /// Indica que deseamos terminar nuestro turno.
+    /// </summary>
+    EndTurn,
+
+    /// <summary>
     /// Se llama para obtener el inventario del oponente.
     /// param[0] = GameplayItemTiming? loTiming - Nos indica de que momento se usan los items, por ende cualquier item con este momento será regresado en el callback. Nota: Si es null manda todo, de lo contrario lo manda filtrado.
     /// param[1] = UnityAction<IEnumerable<GameplayItemStored>> loCallback - Callback que da el inventario requerido.
     /// </summary>
     GetGameplayItemsStored,
-
-    /// <summary>
-    /// Se indica para avisar el turno durante el juego.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si quien termina el turno es del usuario o del oponente. True indica que es turno del oponente.
-    /// </summary>
-    EndTurn,
-
-    /// <summary>
-    /// Se indica para avisar el turno durante el juego.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es turno del usuario o del oponente. True indica que es turno del oponente.
-    /// </summary>
-    SetTurn,
 
     /// <summary>
     /// Se indica para indicar la cantidad de turnos disponibles.
@@ -37,9 +48,8 @@ public enum GameCommand : int
 
     /// <summary>
     /// Se indica para avisar que se ha seleccionado una unidad en el tablero, se manda para que la interfaz tenga conocimiento y realice sus acciones.
-    /// param[0] = int UnitPropertiesId - Id de la unidad selecionada.
-    /// param[1] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// param[2] = Color loColor - Color de la selección.
+    /// param[0] = int UserId - Id del jugador.
+    /// param[1] = BoardUnit loBoardUnit - Son los datos completos de la unidad seleccionada.
     /// </summary>
     SetSelectedUnit,
 

@@ -74,6 +74,7 @@ public class UIModal : UIView
     {
         goOnClick?.Invoke(true);
         if (goResult != null) goResult.Succeed();
+        panel.SetActive(false);
     }
 
     /// <summary>
@@ -83,5 +84,6 @@ public class UIModal : UIView
     {
         goOnClick?.Invoke(false);
         if (goResult != null) goResult.Failed();
+        panel.SetActive(false);
     }
 }

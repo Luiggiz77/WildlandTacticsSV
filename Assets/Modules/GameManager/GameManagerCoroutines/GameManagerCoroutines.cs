@@ -141,7 +141,36 @@ public partial class GameManager : MonoBehaviour
     /// <param name="lcId"></param>
     /// <param name="loCallback"></param>
     /// <param name="loCallbackParameter"></param>
-    public static void RunTimer(string lcId, float lnTime, Action<string> loOnUpdate, Action<bool, object> loCallback = null, object loCallbackParameter = null)
+    public static void RunTimer(string lcId, float lnTime, Action<int, string> loOnUpdate, Action<bool, object> loCallback = null, object loCallbackParameter = null)
+    {
+        RunObject loRunObject;
+
+        //<< Primero buscamos de la lista si se han desactivado.
+        if (goRuns.ContainsKey(lcId))
+        {
+            StopRun(lcId);
+            loRunObject = goRuns[lcId];
+        }
+        else
+        {
+            loRunObject = new RunObject();
+            goRuns.Add(lcId, loRunObject);
+        }
+
+        //<< Asignamos los datos de la coroutina.
+        loRunObject.Callback = loCallback;
+        loRunObject.CallbackParameter = loCallbackParameter;
+        loRunObject.Instance = Instance;
+        loRunObject.Coroutine = Instance.StartCoroutine(Timer(loRunObject, lnTime, loOnUpdate));
+    }
+
+    /// <summary>
+    /// Se llama para animar una funcion
+    /// </summary>
+    /// <param name="lcId"></param>
+    /// <param name="loCallback"></param>
+    /// <param name="loCallbackParameter"></param>
+    public static void RunTimer(string lcId, float lnTime, Action<float> loOnUpdate, Action<bool, object> loCallback = null, object loCallbackParameter = null)
     {
         RunObject loRunObject;
 
@@ -169,7 +198,7 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     /// <param name="lnTime"></param>
     /// <returns></returns>
-    private static IEnumerator Timer(RunObject loRunObject, float lnTime, Action<string> loOnUpdate = null)
+    private static IEnumerator Timer(RunObject loRunObject, float lnTime, Action<int, string> loOnUpdate = null)
     {
         float lnEndTime = Time.time + lnTime;
         int lnLastReportedSeconds = -1;
@@ -185,15 +214,70 @@ public partial class GameManager : MonoBehaviour
             if (lnRemainingSecondsCeil != lnLastReportedSeconds)
             {
                 System.TimeSpan timeSpan = System.TimeSpan.FromSeconds(lnRemainingSecondsCeil);
-                loOnUpdate?.Invoke($"{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}");
+                loOnUpdate?.Invoke(lnRemainingSecondsCeil, $"{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}");
                 lnLastReportedSeconds = lnRemainingSecondsCeil;
             }
 
-            yield return null; //<< Espera un frame, pero no siempre actualiza texto
+            yield return null; //<< Espera un frame
         }
 
         //<< Asegura mostrar 00:00 al final
-        loOnUpdate?.Invoke("00:00");
+        loOnUpdate?.Invoke(0, "00:00");
+
+        loRunObject.Callback?.Invoke(true, loRunObject.CallbackParameter);
+        loRunObject.Coroutine = null;
+    }
+
+    /// <summary>
+    /// Corremos un timer con base en los segundos. Nota: Si se mandan segundos negativos irá del total a 0, si es positivo el tiempo irá de 0 al maximo.
+    /// </summary>
+    /// <param name="lnTime"></param>
+    /// <returns></returns>
+    /// <summary>
+    /// Corremos un timer con base en los segundos. Nota: Si se mandan segundos negativos irá del total a 0, si es positivo el tiempo irá de 0 al maximo.
+    /// </summary>
+    private static IEnumerator Timer(RunObject loRunObject, float lnTime, Action<float> loOnUpdate = null)
+    {
+        float lnElapsedTime = 0.0f;
+        float lnProgress;
+
+        if (Mathf.Approximately(lnTime, 0.0f))
+        {
+            loOnUpdate?.Invoke(0.0f);
+        }
+        else if (lnTime < 0.0f)
+        {
+            // Cuenta regresiva: va de 1.0 a 0.0
+            float lnTotalTime = Mathf.Abs(lnTime);
+            lnElapsedTime = 0.0f;
+
+            while (lnElapsedTime < lnTotalTime)
+            {
+                lnElapsedTime += Time.deltaTime;
+                lnProgress = Mathf.Clamp01(1.0f - (lnElapsedTime / lnTotalTime));
+                loOnUpdate?.Invoke(lnProgress);
+
+                yield return null; //<< Espera un frame
+            }
+
+            //<< Asegura mostrar 0 al final
+            loOnUpdate?.Invoke(0.0f);
+        }
+        else
+        {
+            //<< Cuenta progresiva de 0.0 a 1.0
+            while (lnElapsedTime < lnTime)
+            {
+                lnElapsedTime += Time.deltaTime;
+                lnProgress = Mathf.Clamp01(lnElapsedTime / lnTime);
+                loOnUpdate?.Invoke(lnProgress);
+
+                yield return null; //<< Espera un frame
+            }
+
+            //<< Asegura mostrar el máximo (1.0) al final
+            loOnUpdate?.Invoke(1.0f);
+        }
 
         loRunObject.Callback?.Invoke(true, loRunObject.CallbackParameter);
         loRunObject.Coroutine = null;

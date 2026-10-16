@@ -22,11 +22,27 @@ public enum SignalRCommand : uint
     /// </summary>
     ShowBoard = 5,
     /// <summary>
+    /// Indica que debemos iniciar el timer del cuarto.
+    /// </summary>
+    StartTimer = 6,
+    /// <summary>
     /// Es para indicar de quien es el turno.
     /// </summary>
-    SetTurn = 6,
+    SetTurn = 7,
     /// <summary>
     /// Indica que quiere salir voluntariamente.
     /// </summary>
-    Quit = 7,
+    Quit = 8,
+    /// <summary>
+    /// Nos indica que realizaremos una accion en nuestro turno.
+    /// </summary>
+    SetPlayerAction = 9,
+    /// <summary>
+    /// Indica que debemos reproducir las instrucciones del tablero.
+    /// </summary>
+    PlayInstructions = 10,
+    /// <summary>
+    /// Indica que deseamos terminar nuestro turno.
+    /// </summary>
+    EndTurn = 11,
 }

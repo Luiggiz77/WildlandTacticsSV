@@ -4,27 +4,8 @@ using UnityEngine.UI;
 
 public class UIBlockbar : MonoBehaviour
 {
-    [Tooltip("Es la imagen que se usa para el fill.")]
-    public Image barFill;
-
     [Tooltip("Es el prefab separador del bloques de vida.")]
-    public LayoutElement prefabSeparator;
-
-    [Tooltip("Es el prefab relleno del bloques de vida.")]
-    public LayoutElement prefabPadding;
-
-    [Tooltip("Es el que será el padre de los prefabs de separadores y rellenos.")]
-    public Transform prefabsParent;
-
-    /// <summary>
-    /// Lista separadores instanciados.
-    /// </summary>
-    private List<LayoutElement> goSeparators = new List<LayoutElement>();
-
-    /// <summary>
-    /// Lista de rellenos instanciados.
-    /// </summary>
-    private List<LayoutElement> goPaddings = new List<LayoutElement>();
+    public Image prefabChild;
 
     /// <summary>
     /// Nos indica la cantidad de bloques maxima.
@@ -36,6 +17,8 @@ public class UIBlockbar : MonoBehaviour
     /// </summary>
     private int gnCount = 0;
 
+    List<Image> goChilds = new List<Image>();
+
     /// <summary>
     /// Establece los bloques de vida maxima. Nota: Esta funcion debe llamarse antes que <see cref="SetCount(int)"/>
     /// </summary>
@@ -43,35 +26,20 @@ public class UIBlockbar : MonoBehaviour
     {
         gnMax = lnMax;
 
+        int lnHashCodeChild = prefabChild.GetHashCode();
+
         //<< Desactivamos los prefabs de los bloques de vida instanciados previamente por nosotros.
-        foreach (LayoutElement loItem in goSeparators) loItem.gameObject.SetActive(false);
-        foreach (LayoutElement loItem in goPaddings) loItem.gameObject.SetActive(false);
-        goSeparators.Clear();
-        goPaddings.Clear();
+        foreach (Image loItem in goChilds) loItem.gameObject.SetActive(false);
 
-        int lnHashCodeSeparator = prefabSeparator.GetHashCode();
-        int lnHashCodePadding = prefabPadding.GetHashCode();
-
-        //<< Creamos tantos separadores como bloques de vida menos 1.
-        LayoutElement loSeparator;
-        LayoutElement loPadding;
-        int lnCount = lnMax - 1;
-        for (int i = 0; i < lnCount; i++)
+        //<< Creamos tantos bloques como nos pidan.
+        Image loChild;
+        for (int i = 0; i < lnMax; i++)
         {
-            loPadding = GameManager.Spawn(lnHashCodePadding, prefabPadding);
-            loPadding.transform.SetParent(prefabsParent, false);
-            goPaddings.Add(loPadding);
-
-            loSeparator = GameManager.Spawn(lnHashCodeSeparator, prefabSeparator);
-            loSeparator.transform.SetParent(prefabsParent, false);
-            goSeparators.Add(loSeparator);
+            loChild = GameManager.Spawn(lnHashCodeChild, prefabChild);
+            loChild.enabled = true;
+            loChild.transform.SetParent(transform, false);
+            goChilds.Add(loChild);
         }
-
-        loPadding = GameManager.Spawn(lnHashCodePadding, prefabPadding);
-        loPadding.transform.SetParent(prefabsParent, false);
-        goPaddings.Add(loPadding);
-
-        UpdateCount();
     }
 
     /// <summary>
@@ -80,14 +48,6 @@ public class UIBlockbar : MonoBehaviour
     public virtual void SetCount(int lnBlocks)
     {
         gnCount = lnBlocks;
-        UpdateCount();
-    }
-
-    /// <summary>
-    /// Se llama para actualizar la vida.
-    /// </summary>
-    private void UpdateCount()
-    {
-        barFill.fillAmount = (float)gnCount / gnMax;
+        for (int i = gnMax - 1; i >= gnMax - lnBlocks; i--) goChilds[i].enabled = false;
     }
 }

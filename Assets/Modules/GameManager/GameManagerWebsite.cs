@@ -111,6 +111,11 @@ public partial class GameManager : MonoBehaviour
     private IEnumerable<GameplayItemStored> goInventory = Array.Empty<GameplayItemStored>();
 
     /// <summary>
+    /// Es nuestro UserId.
+    /// </summary>
+    private static int gnUserId = 0;
+
+    /// <summary>
     /// Nos indica el tablero de distribución seleccionado.
     /// </summary>
     private static int gnSelectedDistributionBoardId = 0;
@@ -378,9 +383,10 @@ public partial class GameManager : MonoBehaviour
         }
 
         //<< Nos dan el token del usuario para comunicarnos con el backend.
-        DTO2<string, double> loResponse = JsonUtility.FromJson<DTO2<string, double>>(lcResult);
+        DTO3<string, double, int> loResponse = JsonUtility.FromJson<DTO3<string, double, int>>(lcResult);
         Token = loResponse.Item1;
         TokenExpiration = DateTime.UtcNow.AddSeconds(loResponse.Item2);
+        gnUserId = loResponse.Item3;
     }
 
     /// <summary>

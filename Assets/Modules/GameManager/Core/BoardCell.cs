@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// Se usa para los datos de la celda.
@@ -48,7 +49,7 @@ public class BoardCell<T> where T : class
     /// <summary>
     /// Datos que contiene la celda.
     /// </summary>
-    public T Data = null;
+    public List<T> Data = new List<T>();
 
     /// <summary>
     /// Frente

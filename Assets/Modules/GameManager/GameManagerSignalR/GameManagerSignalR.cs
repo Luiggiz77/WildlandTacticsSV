@@ -54,10 +54,13 @@ public partial class GameManager : MonoBehaviour
         {
             case GameCommand.ShowUIFindMatch:
                 gnSelectedDistributionBoardId = (int)loParams[0];
-                FindMatch(); 
+                FindMatch();
                 break;
 
-            case GameCommand.CancelPairing: StartCoroutine(CancelPairing()); break;
+            case GameCommand.CancelPairing: Run(CancelPairing(), nameof(CancelPairing)); break;
+            case GameCommand.EndTurn: Run(EndTurn(), nameof(EndTurn)); break;
+
+
             default: break;
         }
     }
@@ -93,6 +96,46 @@ public partial class GameManager : MonoBehaviour
         GameManager.Send(GameCommand.HideUILoading);
         GameManager.Send(GameCommand.HideUIPairing);
         GameManager.Send(GameCommand.ShowUICombatPreparation);
+    }
+
+    /// <summary>
+    /// Para terminar el turno.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator EndTurn()
+    {
+        //<< Mostramos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.ShowUILoading, true);
+
+        //<< Revisamos si tenemos turnos pendientes.
+        int lnActionsUser = goBoard.UserIdA == gnUserId ? goBoard.ActionsUserA : goBoard.ActionsUserB;
+
+        //<< Preguntamos si realmente quiere derjar ir sus acciones pendientes.
+        if (lnActionsUser > 0)
+        {
+            CoroutineResult loCoroutineResultModal = new CoroutineResult();
+            GameManager.Send(GameCommand.ShowUIModal, GameManager.GetText(GameTextUsage.Sentence, GameTextSentence.EndTurnConfirmation), GameManager.GetText(GameTextUsage.Word, GameTextWord.Yes), GameManager.GetText(GameTextUsage.Word, GameTextWord.No), null, loCoroutineResultModal);
+
+            //<< Esperamos que nos den indicación de si desean continuar con la operación.
+            while (!loCoroutineResultModal.Completed) yield return null;
+
+            //<< Si nos indican que no deseamos continuar salimos y ocultamos pantalla de carga.
+            if (!loCoroutineResultModal.Succeeded)
+            {
+                GameManager.Send(GameCommand.HideUILoading);
+                yield break;
+            }
+        }
+
+        //<< Si estamos conectados mandamos mensaje de que deseamos terminar turno.
+        if (goHubConnection != null && goHubConnection.State == HubConnectionState.Connected)
+        {
+            Task loTaskEndTurnMessage = Task.Run(async () => await SendAsync(goHubConnection, SignalRCommand.EndTurn, string.Empty));
+            while (!loTaskEndTurnMessage.IsCompleted) yield return null;
+        }
+
+        //<< Ocultamos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.HideUILoading);
     }
 
     /// <summary>
@@ -265,7 +308,7 @@ public partial class GameManager : MonoBehaviour
     private void UpdateSignalR()
     {
         if (goHubConnection == null) return;
-        while(goConcurrentQueue.TryDequeue(out Tuple<SignalRCommand, string> loMessage))
+        while (goConcurrentQueue.TryDequeue(out Tuple<SignalRCommand, string> loMessage))
         {
             Debug.Log($"{loMessage.Item1.ToString()}: {loMessage.Item2}");
             switch (loMessage.Item1)
@@ -279,7 +322,7 @@ public partial class GameManager : MonoBehaviour
                 case SignalRCommand.Board:
                     {
                         //<< En este punto recibimos el tablero.
-                        SetBoard((Board<List<BoardUnit>>)JsonUtility.FromJson(loMessage.Item2, typeof(Board<List<BoardUnit>>)));
+                        SetBoard((Board<BoardUnit>)JsonUtility.FromJson(loMessage.Item2, typeof(Board<BoardUnit>)));
 
                         //<< Reenviamos mensaje con el mismo comando para indicar que recibimos y cargamos el tablero.
                         Send(loMessage.Item1);
@@ -297,27 +340,34 @@ public partial class GameManager : MonoBehaviour
                     //<< Reenviamos mensaje con el mismo comando para indicar que recibimos y que ya mostramos el tablero.
                     Send(loMessage.Item1);
                     break;
+
+                case SignalRCommand.StartTimer:
+                    //<< Mostramos pantalla de combate.
+                    GameManager.Send(GameCommand.ShowUICombat);
+
+                    //<< Mostramos y activamos timer.
+                    GameManager.Send(GameCommand.StartTimer, goBoard.TimeoutRoom);
+
+                    //<< Ocultamos pantalla de emparejamiento.
+                    GameManager.Send(GameCommand.HideUIPairing);
+                    break;
+
                 //<< Nos indican que hay un cambio de turno.
                 case SignalRCommand.SetTurn:
                     {
                         //<< Recibimos el turno y el timer.
-                        DTO2<int, uint> loTurn = (DTO2<int, uint>)JsonUtility.FromJson(loMessage.Item2, typeof(DTO2<int, uint>));
+                        DTO2<int, int> loTurn = (DTO2<int, int>)JsonUtility.FromJson(loMessage.Item2, typeof(DTO2<int, int>));
 
-                        //<< Mostramos los elementos del UIy corremos el timer.
-                        //GameManager.Send(GameCommand.ShowUICombatTurn);
+                        //<< Convertimos de milisegundos a segundos.
+                        float lnTime = loTurn.Item2 / 1000.0f;
 
-                        //<< Se muestra algo indicando que es nuestro turno?
-                        //<< Que se oculta o muestra durante el turno?
-                        //UI Combate
-
-                        //<< Se muestra algo indicando que es nuestro turno? 
-                        //<< Que se oculta o muestra durante el turno? Botones, terminar,
+                        //<< Indicamos de quien es turno.
+                        if (loTurn.Item1 == gnUserId) GameManager.Send(GameCommand.SetTurn, lnTime);
+                        else GameManager.Send(GameCommand.SetTurnOpponent, lnTime);
                     }
                     break;
 
-                
-                default:
-                    break;
+                default: break;
             }
         }
     }

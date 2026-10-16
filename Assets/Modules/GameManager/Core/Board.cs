@@ -5,6 +5,11 @@ using System.Collections.Generic;
 public class Board<T> where T : class
 {
     /// <summary>
+    /// El tiempo total que puede durar una partida en milisegundos.
+    /// </summary>
+    public int TimeoutRoom;
+
+    /// <summary>
     /// Indica la cantidad de acciones que tiene cada oponente.
     /// </summary>
     public int ActionsPerTurn;
@@ -18,6 +23,11 @@ public class Board<T> where T : class
     /// Indica la cantidad de movimientos que puede realizar una sola unidad por turno.
     /// </summary>
     public int UnitMovesPerTurn;
+
+    /// <summary>
+    /// Id del jugador en turno.
+    /// </summary>
+    public int Turn;
 
     /// <summary>
     /// Id del jugador A
@@ -38,6 +48,36 @@ public class Board<T> where T : class
     /// Facción del jugador B
     /// </summary>
     public UnitFaction FactionUserB;
+
+    /// <summary>
+    /// Indica la cantidad de acciones pendientes que tiene el usuario A.
+    /// </summary>
+    public int ActionsUserA;
+
+    /// <summary>
+    /// Indica la cantidad de ataques pendientes del usuario A.
+    /// </summary>
+    public int UnitAttacksUserA;
+
+    /// <summary>
+    /// Indica la cantidad de movimientos pendientes del usuario A.
+    /// </summary>
+    public int UnitMovesUserA;
+
+    /// <summary>
+    /// Indica la cantidad de acciones pendientes que tiene el usuario B.
+    /// </summary>
+    public int ActionsUserB;
+
+    /// <summary>
+    /// Indica la cantidad de ataques pendientes del usuario B.
+    /// </summary>
+    public int UnitAttacksUserB;
+
+    /// <summary>
+    /// Indica la cantidad de movimientos pendientes del usuario B.
+    /// </summary>
+    public int UnitMovesUserB;
 
     /// <summary>
     /// Ancho del mapa (cuadrantes).
@@ -71,7 +111,6 @@ public class Board<T> where T : class
         ActionsPerTurn = lnActionsPerTurn;
         UnitAttacksPerTurn = lnUnitAttacksPerTurn;
         UnitMovesPerTurn = lnUnitMovesPerTurn;
-
         Lenght = lnLenght;
         Width = lnWidth;
         BoardCells = CreateBoard(lnWidth, lnLenght);
@@ -163,7 +202,7 @@ public class Board<T> where T : class
     /// Nos da los datos que contiene la celda.
     /// </summary>
     /// <param name="loCellData"></param>
-    public T GetCellData(int lnCellIndex)
+    public List<T> GetCellData(int lnCellIndex)
     {
         return BoardCells[lnCellIndex].Data;
     }
