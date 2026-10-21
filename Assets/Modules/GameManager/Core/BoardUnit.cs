@@ -41,6 +41,14 @@ public class BoardUnit
 
     public UnitProperties UnitProperties;
 
+    /// <summary>
+    /// Lista de efectos usados para el ataque de la unidad.
+    /// </summary>
+    public List<GameplayEffect> GameplayEffectsAttack = new List<GameplayEffect>();
+
+    /// <summary>
+    /// Lista de efectos agregados a la unidad.
+    /// </summary>
     public List<GameplayEffect> GameplayEffects = new List<GameplayEffect>();
 
     /// <summary>

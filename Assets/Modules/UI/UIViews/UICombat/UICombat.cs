@@ -77,6 +77,30 @@ public class UICombat : UIView
     }
 
     /// <summary>
+    /// Se llama en los eventos de mouse del panel que son llevados al tablero.
+    /// </summary>
+    public void OnBoardMouseDown()
+    {
+        GameManager.Send(GameCommand.OnBoardMouseDown);
+    }
+
+    /// <summary>
+    /// Se llama en los eventos de mouse del panel que son llevados al tablero.
+    /// </summary>
+    public void OnBoardMouseDrag()
+    {
+        GameManager.Send(GameCommand.OnBoardMouseDrag);
+    }
+
+    /// <summary>
+    /// Se llama en los eventos de mouse del panel que son llevados al tablero.
+    /// </summary>
+    public void OnBoardMouseUp()
+    {
+        GameManager.Send(GameCommand.OnBoardMouseUp);
+    }
+
+    /// <summary>
     /// Es para actualizar el fill del timer.
     /// </summary>
     /// <param name="lnDelta"></param>

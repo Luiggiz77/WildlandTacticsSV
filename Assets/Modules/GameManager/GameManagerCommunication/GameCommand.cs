@@ -50,6 +50,7 @@ public enum GameCommand : int
     /// Se indica para avisar que se ha seleccionado una unidad en el tablero, se manda para que la interfaz tenga conocimiento y realice sus acciones.
     /// param[0] = int UserId - Id del jugador.
     /// param[1] = BoardUnit loBoardUnit - Son los datos completos de la unidad seleccionada.
+    /// param[2] = Color loOutlineColor - Es el color del outline al seleccionar la unidad.
     /// </summary>
     SetSelectedUnit,
 
@@ -69,15 +70,13 @@ public enum GameCommand : int
 
     /// <summary>
     /// Se indica para avisar que se debe habilitar/deshabilitar el boton de confirmación de ataque de la unidad.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// param[1] = bool lbEnable - Bandera que nos indica si debe o no estár habilitado el botón.
+    /// param[0] = bool lbEnable - Bandera que nos indica si debe o no estár habilitado el botón.
     /// </summary>
     SetEnableConfirmUnitAttack,
 
     /// <summary>
     /// Se indica para avisar que se debe habilitar/deshabilitar el boton de confirmación de movimiento de la unidad.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// param[1] = bool lbEnable - Bandera que nos indica si debe o no estár habilitado el botón.
+    /// param[0] = bool lbEnable - Bandera que nos indica si debe o no estár habilitado el botón.
     /// </summary>
     SetEnableConfirmUnitMove,
 

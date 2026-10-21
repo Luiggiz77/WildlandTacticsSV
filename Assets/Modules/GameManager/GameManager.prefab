@@ -48,6 +48,13 @@ MonoBehaviour:
   boardParent: {fileID: 2201857206702249325}
   gridLine: {fileID: 1162259379434517041, guid: 9baa02f1a35ddb744acb5b0d454ea6c9, type: 3}
   checker: {fileID: 8570228683353277186, guid: 0c6b0db078a0b5449be56896d14c9865, type: 3}
+  boardCellSelectedEmpty: {fileID: 8570228683353277186, guid: 0439d75f490074a4baf4f96f4eb26fe4, type: 3}
+  prefabBoardCellMove: {fileID: 8570228683353277186, guid: ac51c1def8a6f8f4e9a57daa3a62996d, type: 3}
+  prefabBoardCellAttack: {fileID: 8570228683353277186, guid: 863ce342e01ddc1498f9f91d97a0555e, type: 3}
+  prefabBoardCellSelected: {fileID: 8570228683353277186, guid: cbc04fe6622246d43a5dc6cedb4cb95a, type: 3}
+  prefabBoardCellEffectArea: {fileID: 8570228683353277186, guid: 786a78f939a1f344b93b023d2db5c373, type: 3}
   prefabBoardCellSelector: {fileID: 8570228683353277186, guid: 5ec7784cb3de7584b9b6d480f3dc8503, type: 3}
   prefabUnitHealthbar: {fileID: -6769539890857703570, guid: 0d43407d6f324e642a235e337b91dd8b, type: 3}
   HealthbarColor: {r: 0.9528302, g: 0.3755289, b: 0, a: 1}
+  unitOutlineColorUser: {r: 0, g: 0.52795154, b: 0.7075472, a: 1}
+  unitOutlineColorOpponent: {r: 1, g: 0.2696729, b: 0, a: 1}

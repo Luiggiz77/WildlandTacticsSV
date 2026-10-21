@@ -139,6 +139,22 @@ public class Board<T> where T : class
     }
 
     /// <summary>
+    /// Nos da la celda con base en el item contenido.
+    /// </summary>
+    /// <param name="loCellData"></param>
+    public bool TryGetCell(T loElement, out BoardCell<T> loBoardCell)
+    {
+        loBoardCell = null;
+        foreach (BoardCell<T> loItem in BoardCells)
+        {
+            if (!loItem.Data.Contains(loElement)) continue;
+            loBoardCell = loItem;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Nos da la celda con base en el id pero en un array.
     /// </summary>
     /// <param name="loCellData"></param>

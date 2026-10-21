@@ -32,42 +32,48 @@ public class UnitElement : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        //int lnCount = renderers.Length;
-        //for (int i = lnCount - 1; i >= 0; i--)
-        //{
-        //    if (renderers[i] != null) continue;
-        //        lnCount = 0;
-        //    break;
-        //}
+        int lnCount = renderers.Length;
+        for (int i = lnCount - 1; i >= 0; i--)
+        {
+            if (renderers[i] != null) continue;
+            lnCount = 0;
+            break;
+        }
 
-        //goMaterials = new Material[lnCount][];
-        //goSharedMaterials = new Material[lnCount][];
-        //goOutlineMaterials = new Material[selectionOutlined.Length][];
+        goMaterials = new Material[lnCount][];
+        goSharedMaterials = new Material[lnCount][];
+        goOutlineMaterials = new Material[selectionOutlined.Length][];
 
-        ////<< Creamos copia de los materiales originales y creamos una copia para los de selección.
-        //for (int i = 0; i < lnCount; i++)
-        //{
-        //    //<< Guardardamos shared ORIGINAL.
-        //    goSharedMaterials[i] = renderers[i].sharedMaterials.Clone() as Material[];
+        //<< Creamos copia de los materiales originales y creamos una copia para los de selección.
+        for (int i = 0; i < lnCount; i++)
+        {
+            //<< Guardardamos shared ORIGINAL.
+            goSharedMaterials[i] = renderers[i].sharedMaterials.Clone() as Material[];
 
-        //    //<< Creamos INSTANCIAS reales para runtime.
-        //    var shared = renderers[i].sharedMaterials;
-        //    var instanced = new Material[shared.Length];
+            //<< Creamos INSTANCIAS reales para runtime.
+            var shared = renderers[i].sharedMaterials;
+            var instanced = new Material[shared.Length];
 
-        //    for (int m = 0; m < shared.Length; m++) instanced[m] = new Material(shared[m]);
+            for (int m = 0; m < shared.Length; m++)
+            {
+#if UNITY_EDITOR
+                if (shared[m] == null) Debug.LogError($"SharedMaterial Null en GameObject: {gameObject.name} UnitElement");
+#endif
+                instanced[m] = new Material(shared[m]);
+            }
 
-        //    renderers[i].materials = instanced;
-        //    goMaterials[i] = instanced;
-        //}
+            renderers[i].materials = instanced;
+            goMaterials[i] = instanced;
+        }
 
-        //int lnIndexOf;
-        //lnCount = selectionOutlined.Length;
-        //for (int i = 0; i < lnCount; i++)
-        //{
-        //    lnIndexOf = System.Array.IndexOf(renderers, selectionOutlined[i]);
-        //    if (lnIndexOf > -1) goOutlineMaterials[i] = goMaterials[lnIndexOf];
-        //    else goOutlineMaterials[i] = selectionOutlined[i].materials.Clone() as Material[];
-        //}
+        int lnIndexOf;
+        lnCount = selectionOutlined.Length;
+        for (int i = 0; i < lnCount; i++)
+        {
+            lnIndexOf = System.Array.IndexOf(renderers, selectionOutlined[i]);
+            if (lnIndexOf > -1) goOutlineMaterials[i] = goMaterials[lnIndexOf];
+            else goOutlineMaterials[i] = selectionOutlined[i].materials.Clone() as Material[];
+        }
     }
 
     /// <summary>

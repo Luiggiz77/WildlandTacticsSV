@@ -5,7 +5,6 @@ using System.Collections;
 using System.Threading;
 using System.Collections.Concurrent;
 using System;
-using System.Collections.Generic;
 
 public partial class GameManager : MonoBehaviour
 {

@@ -26,6 +26,7 @@ public partial class GameManager : MonoBehaviour
         AwakeWebsite();
         AwakeLanguage();
         AwakeSignalR();
+        AwakeBoard();
     }
 
     /// <summary>
