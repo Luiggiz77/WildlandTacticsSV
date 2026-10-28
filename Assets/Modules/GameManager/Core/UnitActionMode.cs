@@ -6,4 +6,5 @@ public enum UnitActionMode
     None = 0,
     Move = 1,
     Attack = 2,
+    Heal = 3,
 }

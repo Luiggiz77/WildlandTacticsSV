@@ -104,4 +104,8 @@ public enum GameTextWord : int
     /// Ok
     /// </summary>
     Ok = 25,
+    /// <summary>
+    /// Curar
+    /// </summary>
+    Heal = 26,
 }

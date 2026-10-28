@@ -341,17 +341,22 @@ public partial class GameManager : MonoBehaviour
                     break;
 
                 case SignalRCommand.StartTimer:
-                    //<< Mostramos pantalla de combate.
-                    GameManager.Send(GameCommand.ShowUICombat);
+                    {
+                        //<< Mostramos pantalla de combate.
+                        GameManager.Send(GameCommand.ShowUICombat);
 
-                    //<< Mostramos y activamos timer.
-                    GameManager.Send(GameCommand.StartTimer, goBoard.TimeoutRoom);
+                        //<< Convertimos de milisegundos a segundos.
+                        float lnTime = goBoard.TimeoutRoom / 1000.0f;
 
-                    //<< Ocultamos pantalla de emparejamiento.
-                    GameManager.Send(GameCommand.HideUIPairing);
+                        //<< Mostramos y activamos timer.
+                        GameManager.Send(GameCommand.StartTimer, lnTime);
+
+                        //<< Ocultamos pantalla de emparejamiento.
+                        GameManager.Send(GameCommand.HideUIPairing);
+                    }
                     break;
 
-                //<< Nos indican que hay un cambio de turno.
+                //<< Nos indican que hay un cambio de turno forzado.
                 case SignalRCommand.SetTurn:
                     {
                         //<< Recibimos el turno y el timer.
@@ -359,6 +364,8 @@ public partial class GameManager : MonoBehaviour
 
                         //<< Convertimos de milisegundos a segundos.
                         float lnTime = loTurn.Item2 / 1000.0f;
+
+                        goBoard.Turn = loTurn.Item1;
 
                         //<< Indicamos de quien es turno.
                         if (loTurn.Item1 == gnUserId) GameManager.Send(GameCommand.SetTurn, lnTime);

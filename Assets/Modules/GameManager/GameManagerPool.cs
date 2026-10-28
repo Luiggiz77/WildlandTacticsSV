@@ -36,6 +36,36 @@ public partial class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Establecemos la posicion y rotacion de la particula y reproducimos.
+    /// </summary>
+    /// <param name="loType"></param>
+    /// <param name="loPosition"></param>
+    public static T Spawn<T>(int lnHashCode, T loComponent, out bool lbNew) where T : Component
+    {
+        lbNew = false;
+
+        //<< Si no hay llave del elemento lo agregamos.
+        if (!goSpawns.ContainsKey(lnHashCode)) goSpawns.Add(lnHashCode, new List<Component>());
+
+        //<< Primero buscamos de las particulas que se han desactivado.
+        List<Component> loSpawns = goSpawns[lnHashCode];
+        foreach (Component loItem in loSpawns)
+        {
+            if (loItem.gameObject.activeSelf) continue;
+            loItem.gameObject.SetActive(true);
+            return (T)loItem;
+        }
+
+        //<< Ya que no hay ningun elemento desocupado creamos uno mas.
+        Component loInstantiated = Instantiate(loComponent);
+        loInstantiated.transform.localScale = Vector3.one;
+        loInstantiated.gameObject.SetActive(true);
+        loSpawns.Add(loInstantiated);
+        lbNew = true;
+        return (T)loInstantiated;
+    }
+
+    /// <summary>
     /// Desactiva todos los elementos.
     /// </summary>
     /// <param name="loType"></param>

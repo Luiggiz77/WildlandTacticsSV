@@ -114,8 +114,19 @@ public class Board<T> where T : class
         Lenght = lnLenght;
         Width = lnWidth;
         BoardCells = CreateBoard(lnWidth, lnLenght);
-        int lnSize = lnWidth * lnLenght;
-        goSelectedCells = new BoardCell<T>[lnSize];
+        CreateSelectedCells();
+    }
+
+    /// <summary>
+    /// Se debe llamar cuando llega el tablero del servidor para reconectar los elementos.
+    /// </summary>
+    public void CreateSelectedCells()
+    { 
+        if(goSelectedCells == null)
+        {
+            int lnSize = Width * Lenght;
+            goSelectedCells = new BoardCell<T>[lnSize];
+        }
     }
 
     /// <summary>
@@ -1043,5 +1054,15 @@ public class Board<T> where T : class
         }
 
         return goSelectedCells;
+    }
+
+    /// <summary>
+    /// Nos da la cantidad de acciones con base en el UserId.
+    /// </summary>
+    /// <param name="lnUserId"></param>
+    /// <returns></returns>
+    public int GetActionsCount(int lnUserId)
+    {
+        return UserIdA == lnUserId ? ActionsUserA : ActionsUserB;
     }
 }

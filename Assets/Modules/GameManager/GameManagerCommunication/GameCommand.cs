@@ -55,42 +55,32 @@ public enum GameCommand : int
     SetSelectedUnit,
 
     /// <summary>
+    /// Se llama para establecer el modo de acción de la unidad.
+    /// param[0] = UnitActionMode loUnitActionMode - Modo de accion de la unidad. Nota: Nos responden con el comando "ShowUICombat_Actions".
+    /// </summary>
+    SetUnitActionMode,
+
+    /// <summary>
     /// Se indica para avisar que se debe habilitar el ataque de la unidad.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// param[1] = UnityAction<int> UnitAttackEnabled - Callback que indica que se ha habilitado el ataque correctamente.
+    /// param[0] = UnityAction<int> UnitAttackEnabled - Callback que indica que se ha habilitado el ataque correctamente.
     /// </summary>
     EnableUnitAttack,
 
     /// <summary>
     /// Se indica para avisar que se debe habilitar el movimiento de la unidad.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// param[1] = UnityAction<int> UnitMoveEnabled - Callback que indica que se ha habilitado el movimiento correctamente.
+    /// param[0] = UnityAction<int> UnitMoveEnabled - Callback que indica que se ha habilitado el movimiento correctamente.
     /// </summary>
     EnableUnitMove,
 
     /// <summary>
-    /// Se indica para avisar que se debe habilitar/deshabilitar el boton de confirmación de ataque de la unidad.
-    /// param[0] = bool lbEnable - Bandera que nos indica si debe o no estár habilitado el botón.
+    /// Se indica para avisar que se confirma la acción seleccionada de la unidad y las celdas de la misma.
     /// </summary>
-    SetEnableConfirmUnitAttack,
+    ConfirmUnitAction,
 
     /// <summary>
-    /// Se indica para avisar que se debe habilitar/deshabilitar el boton de confirmación de movimiento de la unidad.
-    /// param[0] = bool lbEnable - Bandera que nos indica si debe o no estár habilitado el botón.
+    /// Se indica para avisar que se cancela la acción seleccionada de la unidad y las celdas de la misma.
     /// </summary>
-    SetEnableConfirmUnitMove,
-
-    /// <summary>
-    /// Se indica para avisar que se debe habilitar el ataque de la unidad.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// </summary>
-    ConfirmUnitAttack,
-
-    /// <summary>
-    /// Se indica para avisar que se debe habilitar el movimiento de la unidad.
-    /// param[0] = bool lbOpponent - Bandera que nos indica si es del usuario o del oponente. True indica que es del oponente.
-    /// </summary>
-    ConfirmUnitMove,
+    CancelUnitAction,
 
     /// <summary>
     /// Se indica para pedir el tipo de acción actual. Para saber si es de movimiento u ataque de la unidad.
@@ -540,6 +530,43 @@ public enum GameCommand : int
     /// param[1] = int lnDistributionBoardIdOpponent - Es el id del tablero del oponente.
     /// </summary>
     ShowUICombat,
+
+    /// <summary>
+    /// Indica que debemos mostrar/ocultar las acciones.
+    /// param[0] = bool lbShow - Indica si debemos mostrar o no las acciones.
+    /// </summary>
+    UICombat_DisplayActions,
+
+    /// <summary>
+    /// Indica que debemos mostrar la pantalla de confirmación.
+    /// param[0] = bool lbShow - Indica si debemos mostrar o no la pantalla de confirmación.
+    /// param[1] = UnitActionMode loUnitActionMode - Indica la acción a confirmar.
+    /// </summary>
+    UICombat_DisplayConfirmation,
+
+    /// <summary>
+    /// Indica que debemos mostrar/ocultar la accion de curar.
+    /// param[0] = bool lbShow - Indica si debemos mostrar o no la accion de curar.
+    /// </summary>
+    UICombat_DisplayActionHeal,
+
+    /// <summary>
+    /// Indica que debemos habilitar o deshabilitar el movimiento.
+    /// param[0] = bool lbEnable - Indica si debemos habilitar o no el movimiento en las acciones.
+    /// </summary>
+    UICombat_EnableActionMove,
+
+    /// <summary>
+    /// Indica que debemos habilitar o deshabilitar el movimiento.
+    /// param[0] = bool lbEnable - Indica si debemos habilitar o no el ataque en las acciones.
+    /// </summary>
+    UICombat_EnableActionAttack,
+
+    /// <summary>
+    /// Indica que debemos habilitar o deshabilitar el movimiento.
+    /// param[0] = bool lbEnable - Indica si debemos habilitar o no la curación en las acciones.
+    /// </summary>
+    UICombat_EnableActionHeal,
 
     /// <summary>
     /// Mostrar la pantalla de pausa.
