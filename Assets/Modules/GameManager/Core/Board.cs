@@ -836,7 +836,7 @@ public class Board<T> where T : class
         for (int i = 0; i < lnCells; i++)
         {
             if (loAllowed(goSelectedCells[i])) continue;
-            goSelectedCells[i] = BoardCell<T>.Blocked;
+            goSelectedCells[i] = null;
             lnRemovedCells++;
         }
 
@@ -851,7 +851,7 @@ public class Board<T> where T : class
             {
                 if (goSelectedCells[j] == null) continue;
                 goSelectedCells[i] = goSelectedCells[j];
-                goSelectedCells[j] = BoardCell<T>.Blocked;
+                goSelectedCells[j] = null;
                 break;
             }
         }
@@ -879,7 +879,7 @@ public class Board<T> where T : class
         for (int i = 0; i < lnCells; i++)
         {
             if (loAllowed(goSelectedCells[i], loT1)) continue;
-            goSelectedCells[i] = BoardCell<T>.Blocked;
+            goSelectedCells[i] = null;
             lnRemovedCells++;
         }
 
@@ -894,7 +894,7 @@ public class Board<T> where T : class
             {
                 if (goSelectedCells[j] == null) continue;
                 goSelectedCells[i] = goSelectedCells[j];
-                goSelectedCells[j] = BoardCell<T>.Blocked;
+                goSelectedCells[j] = null;
                 break;
             }
         }
@@ -922,7 +922,7 @@ public class Board<T> where T : class
         for (int i = 0; i < lnCells; i++)
         {
             if (loAllowed(loCells[i], loT1, loT2)) continue;
-            loCells[i] = BoardCell<T>.Blocked;
+            loCells[i] = null;
             lnRemovedCells++;
         }
 
@@ -937,7 +937,7 @@ public class Board<T> where T : class
             {
                 if (loCells[j] == null) continue;
                 loCells[i] = loCells[j];
-                loCells[j] = BoardCell<T>.Blocked;
+                loCells[j] = null;
                 break;
             }
         }
@@ -998,7 +998,7 @@ public class Board<T> where T : class
         int lnCount = BoardCells.Length - 1;
         int lnDistance;
         lnCells = 0;
-        goSelectedCells[0] = BoardCell<T>.Blocked;
+        goSelectedCells[0] = null;
         BoardCell<T> loCell = BoardCells[lnCellIndex];
         int lnX = loCell.X;
         int lnZ = loCell.Z;
@@ -1032,7 +1032,7 @@ public class Board<T> where T : class
         int lnCount = BoardCells.Length - 1;
         int lnDistance;
         lnCells = 0;
-        goSelectedCells[0] = BoardCell<T>.Blocked;
+        goSelectedCells[0] = null;
         BoardCell<T> loCell = BoardCells[lnCellIndex];
         int lnX = loCell.X;
         int lnZ = loCell.Z;

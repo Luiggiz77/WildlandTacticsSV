@@ -386,6 +386,64 @@ public partial class GameManager : MonoBehaviour
         //<< Obtenemos la celda seleccionada.
         BoardCell<BoardUnit> loBoardCell = goBoard.GetCell(lnCellIndex);
 
+        //<< Si está dentro del area de seleccion sabemos que quiere realizar la accion en dicha celda.
+        if (goUnitSurroundingCells.Any(x => x.Index == lnCellIndex))
+        {
+            //<< Revisamos si es alguna de las celdas que rodean la unidad para alguna acción.
+            switch (goUnitActionMode)
+            {
+                case UnitActionMode.Move:
+                    //<< Revisamos si es una de las celdas circundantes, si es así obtenemos el path mas acercado.
+                    if (goUnitSurroundingCells.Contains(loBoardCell))
+                    {
+                        //<< Desactivamos las celdas previamente seleccionadas.
+                        DeactivateCellsSelected();
+
+                        //<< Obtenemos cuantas celdas puede desplazarse la unidad.
+                        int lnDistance = goSelectedBoardUnit.GetMovement() + 1;
+
+                        //<< Obtenemos los indices de las celdas seleccionadas.
+                        int lnCellIndexStart = gnSelectedCellIndex;
+                        int lnCellIndexEnd = goBoard.CellIndexOf(loBoardCell.X, loBoardCell.Z);
+
+                        //<< Si la unidad se teletransporta solo podemos mostrar dos celdas, la de la unidad y la elegida.
+                        if (goSelectedBoardUnit.UnitProperties.UnitBattleProperties.Teleports)
+                        {
+                            goUnitCellsSelected.Add(goBoard.GetCell(lnCellIndexStart));
+                            goUnitCellsSelected.Add(goBoard.GetCell(lnCellIndexEnd));
+                        }
+                        else
+                        {
+                            //<< Obtenemos el camino de celdas del inicio al fin.
+                            goBoard.GetClosestPath(lnCellIndexStart, lnCellIndexEnd, lnDistance, BoardCellPassThrough, goUnitCellsSelected);
+
+                            //<< Revertimos el path para que inicie desde la unidad.
+                            goUnitCellsSelected.Reverse();
+                        }
+
+                        //<< Obtenemos el hashcode de la celda que representa las celdas de desplazamiento.
+                        int lnHashCode = prefabBoardCellSelected.GetHashCode();
+
+                        //<< Instanciamos el rango de celdas por las que puede moverse la unidad.
+                        Transform loDisplacementCell;
+                        foreach (BoardCell<BoardUnit> loItem in goUnitCellsSelected)
+                        {
+                            loDisplacementCell = Spawn(lnHashCode, prefabBoardCellSelected);
+                            loDisplacementCell.position = new Vector3(loItem.X, 0.0f, loItem.Z);
+                        }
+
+                        //<< Avisamos que debemos confirmar la acción de ataque ya que tenemos objetivo.
+                        GameManager.Send(GameCommand.UICombat_DisplayConfirmation, true, UnitActionMode.Move);
+                    }
+                    break;
+                case UnitActionMode.Attack: OnUnitActionModeAttack(loBoardCell, goSelectedBoardUnit); break;
+                default: break;
+            }
+
+            //<< Regresamos por que no estamos seleccionando unidad.
+            return;
+        }
+
         //<< Obtenemos la unidad de la celda seleccionada.
         BoardUnit loSelectedBoardUnit = loBoardCell.Data.FirstOrDefault(x => x.UnitProperties.UnitBattleProperties.UnitType == UnitType.Unit);
 
@@ -481,6 +539,13 @@ public partial class GameManager : MonoBehaviour
                         case AttackAreaType.Cross: goBoard.GetAreaCross(lnCellIndex, lnAttackRange, goUnitSurroundingCells); break;
                         case AttackAreaType.X: goBoard.GetAreaX(lnCellIndex, lnAttackRange, goUnitSurroundingCells); break;
                         default: goBoard.GetAreaRadial(lnCellIndex, lnAttackRange, goUnitSurroundingCells); break;
+                    }
+
+                    //<< Como no podemos atacar nuestras propias unidades las removemos de la selección de ataque.
+                    int lnCount = goUnitSurroundingCells.Count;
+                    for (int i = lnCount - 1; i >= 0; i--)
+                    {
+                        if (goUnitSurroundingCells[i].Data.Any(x => x.UserId == gnUserId)) goUnitSurroundingCells.RemoveAt(i);
                     }
 
                     //<< Creamos las celdas usando el rango de ataque.
@@ -786,7 +851,7 @@ public partial class GameManager : MonoBehaviour
         bool lbNew;
         BoardCell<BoardUnit> loBoardCellPath;
         int lnCount = goUnitSurroundingCells.Count;
-        for (int i = 1; i < lnCount; i++)
+        for (int i = 0; i < lnCount; i++)
         {
             loBoardCellPath = goUnitSurroundingCells[i];
             loCell = Spawn(lnHashCode, loPrefabBoardCell, out lbNew);
@@ -816,6 +881,9 @@ public partial class GameManager : MonoBehaviour
 
         //<< Mostramos el area de efecto.
         CreateEffectAreaOf(loBoardUnit, loBoardCellTarget, loBoardUnit.GameplayEffectsAttack);
+
+        //<< Avisamos que debemos confirmar la acción de ataque ya que tenemos objetivo.
+        GameManager.Send(GameCommand.UICombat_DisplayConfirmation, true, UnitActionMode.Attack);
     }
 
     /// <summary>
@@ -1182,3 +1250,26 @@ public partial class GameManager : MonoBehaviour
         CreateActionCells(gnSelectedCellIndex, goSelectedBoardUnit);
     }
 }
+
+//Seleccionas unidad - Se muestra el area de atque > Seleccionas celda de unidad enemiga para atacar > Aparece confirmar y cancelar
+//Seleccionas unidad - Se muestra el area de atque > ? Como se cancela si te arrepientes aqui y quieres atacar con otra unidad
+
+//Dos curadores
+
+//<< Si en el ataque seleccionas otra unidad, se cambia a la unidad seleccionada. No
+//<< En curacion solo puedes seleccionar tus propias unidades para curarlas pero que pasa si quieres cambiar de unidad al seleccionar curar?
+//<< Ya le diste curar y te arrepientes y quieres seleccionar una unidad circundante?
+
+
+//<< Toda el area pero en dos colores, solo donde sea unidad aparece de otro color.
+//<< Se quita el portraretrato al no seleccionar nada.
+//<< El secundario de curador.
+
+
+//<< Las unidades pueden atacar a las aliadas?
+
+//<< Atacar al vacio se quita el retrato de la segunda unidad? Si
+//<< Al seleccionar curar se selecciona la unidad a curar propia? Si
+
+//<< Modo selección en tres pasos.
+//<< Celda unica seleccionada al terminar la selección.

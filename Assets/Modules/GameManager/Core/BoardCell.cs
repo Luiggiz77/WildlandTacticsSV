@@ -7,9 +7,6 @@ using System.Collections.Generic;
 [Serializable]
 public class BoardCell<T> where T : class
 {
-    [NonSerialized]
-    public static readonly BoardCell<T> Blocked = new BoardCell<T>(-1, 0, 0);
-
     private class IndexDistance
     {
         public int Index;
@@ -55,45 +52,45 @@ public class BoardCell<T> where T : class
     /// Frente
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> ZPos = Blocked;
+    public BoardCell<T> ZPos = null;
     /// <summary>
     /// Atrás
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> ZNeg = Blocked;
+    public BoardCell<T> ZNeg = null;
     /// <summary>
     /// Izquierda
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> XNeg = Blocked;
+    public BoardCell<T> XNeg = null;
     /// <summary>
     /// Derecha
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> XPos = Blocked;
+    public BoardCell<T> XPos = null;
 
     /// <summary>
     /// Diagonal frente izquierda
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> ZPosXNeg = Blocked;
+    public BoardCell<T> ZPosXNeg = null;
     /// <summary>
     /// Diagonal frente derecha
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> ZPosXPos = Blocked;
+    public BoardCell<T> ZPosXPos = null;
 
     /// <summary>
     /// Diagonal atrás izquierda.
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> ZNegXNeg = Blocked;
+    public BoardCell<T> ZNegXNeg = null;
 
     /// <summary>
     /// Diagonal atrás derecha.
     /// </summary>
     [NonSerialized]
-    public BoardCell<T> ZNegXPos = Blocked;
+    public BoardCell<T> ZNegXPos = null;
 
     /// <summary>
     /// Son las los alrededores de nuestra celda en cruz.
