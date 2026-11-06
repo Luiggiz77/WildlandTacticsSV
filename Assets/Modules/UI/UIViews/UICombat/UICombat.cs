@@ -28,19 +28,22 @@ public class UICombat : UIView
     [Header("CONTROLS")]
 
     [Tooltip("Portaretrato de la unidad del usuario")]
-    public UICombatUnitPortrait unitPortraitUser;
+    public UICombatUnitPortrait unitPortraitPrimary;
 
     [Tooltip("Portaretrato de la unidad del oponente")]
-    public UICombatUnitPortrait unitPortraitOpponent;
+    public UICombatUnitPortrait unitPortraitSecondary;
 
     [Tooltip("Stats de la unidad del usuario")]
-    public UICombatUnitStats unitStatsUser;
+    public UICombatUnitStats unitStatsPrimary;
 
     [Tooltip("Stats de la unidad del oponente")]
-    public UICombatUnitStats unitStatsOpponent;
+    public UICombatUnitStats unitStatsSecondary;
 
     [Tooltip("Panel con el botón de confirmar u (Atacar,Curar,Mover)")]
     public UIFloating confirmation;
+
+    [Tooltip("Panel con el botón de regresar estado.")]
+    public UIFloating returnState;
 
     [Header("BUTTONS")]
     [Tooltip("Toggle de ataque.")]
@@ -90,6 +93,15 @@ public class UICombat : UIView
     public TMP_Text textButtonCancel;
 
     /// <summary>
+    /// Start
+    /// </summary>
+    private void Start()
+    {
+        returnState.gameObject.SetActive(false);
+        confirmation.gameObject.SetActive(false);
+    }
+
+    /// <summary>
     /// Para recibir comandos.
     /// </summary>
     /// <param name="loCommand"></param>
@@ -135,16 +147,16 @@ public class UICombat : UIView
                     //<< Revisamos si es del usuario u oponente.
                     if (loBoardUnit.UserId == lnUserId)
                     {
-                        unitStatsUser.UpdateUnitStats(loBoardUnit);
-                        unitStatsUser.gameObject.SetActive(true);
-                        unitPortraitUser.gameObject.SetActive(true);
+                        unitStatsPrimary.UpdateUnitStats(loBoardUnit);
+                        unitStatsPrimary.gameObject.SetActive(true);
+                        unitPortraitPrimary.gameObject.SetActive(true);
                         floatingActions.gameObject.SetActive(floatingTurnMenu.gameObject.activeSelf);
                     }
                     else
                     {
-                        unitStatsOpponent.UpdateUnitStats(loBoardUnit);
-                        unitStatsOpponent.gameObject.SetActive(true);
-                        unitPortraitOpponent.gameObject.SetActive(true);
+                        unitStatsSecondary.UpdateUnitStats(loBoardUnit);
+                        unitStatsSecondary.gameObject.SetActive(true);
+                        unitPortraitSecondary.gameObject.SetActive(true);
                     }
                 }
                 break;
@@ -155,6 +167,8 @@ public class UICombat : UIView
                     floatingActions.gameObject.SetActive((bool)loParams[0]);
                 }
                 break;
+
+            case GameCommand.UICombat_DisplayReturnState: returnState.gameObject.SetActive((bool)loParams[0]); break;
 
             case GameCommand.UICombat_DisplayActionHeal: buttonHeal.gameObject.SetActive((bool)loParams[0]); break;
 
@@ -196,16 +210,10 @@ public class UICombat : UIView
                 }
                 break;
 
+            case GameCommand.UICombat_DisplayPortraitSecondary: unitPortraitPrimary.gameObject.SetActive((bool)loParams[0]); break;
+
             default: break;
         }
-    }
-
-    /// <summary>
-    /// Se llama en los eventos de mouse del panel que son llevados al tablero.
-    /// </summary>
-    public void OnBoardMouseDown()
-    {
-        GameManager.Send(GameCommand.OnBoardMouseDown);
     }
 
     /// <summary>
@@ -319,6 +327,14 @@ public class UICombat : UIView
     /// </summary>
     public void OnClickItems()
     {
+    }
+
+    /// <summary>
+    /// Para cuando deseamos regresar al estado anterior ya sea a seleccion de accion o selección de celdas.
+    /// </summary>
+    public void OnClickReturnState()
+    {
+        GameManager.Send(GameCommand.ReturnActionState);
     }
 }
 

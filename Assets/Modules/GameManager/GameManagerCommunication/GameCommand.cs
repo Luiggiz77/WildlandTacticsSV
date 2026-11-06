@@ -83,6 +83,11 @@ public enum GameCommand : int
     CancelUnitAction,
 
     /// <summary>
+    /// Se indica para regresar a un estado anterior de la acción a realizar en la unidad.
+    /// </summary>
+    ReturnActionState,
+
+    /// <summary>
     /// Se indica para pedir el tipo de acción actual. Para saber si es de movimiento u ataque de la unidad.
     /// param[0] = UnityAction<UnitActionMode> loUnitActionMode - Callback que indica el tipo de accón actual.
     /// </summary>
@@ -114,12 +119,6 @@ public enum GameCommand : int
     /// param[5] = string lcData string de algun dato que pueda ser de utilidad, por ejemplo cuando dos tablas comparte el mismo tipo de objeto aqui podemos indicar a cual de las tablas dirigir.
     /// </summary>
     SetValue,
-
-    /// <summary>
-    /// Se llama cuando sucede un evento de mouse sobre el "tablero".
-    /// Nota: Solo es el evento que sucede en un panel en UICombat que se reenvia al GameManager.
-    /// </summary>
-    OnBoardMouseDown,
 
     /// <summary>
     /// Se llama cuando sucede un evento de mouse sobre el "tablero".
@@ -536,6 +535,18 @@ public enum GameCommand : int
     /// param[0] = bool lbShow - Indica si debemos mostrar o no las acciones.
     /// </summary>
     UICombat_DisplayActions,
+
+    /// <summary>
+    /// Indica que debemos mostrar/ocultar el botón de regresar al estado de acción anterior.
+    /// param[0] = bool lbShow - Indica si debemos mostrar o no el botón.
+    /// </summary>
+    UICombat_DisplayReturnState,
+
+    /// <summary>
+    /// Indica si debemos mostrar/ocultar el portaretrato secundario.
+    /// param[0] = bool lbShow - Indica si debemos mostrar o no el portaretrato.
+    /// </summary>
+    UICombat_DisplayPortraitSecondary,
 
     /// <summary>
     /// Indica que debemos mostrar la pantalla de confirmación.

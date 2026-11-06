@@ -13,8 +13,8 @@ TagManager:
   - UI
   - BoardCell
   - UnitAttackLoop
-  - UnitPortraitUser
-  - UnitPortraitOpponent
+  - UnitPortraitPrimary
+  - UnitPortraitSecondary
   - 
   - 
   - 

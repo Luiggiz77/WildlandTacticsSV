@@ -133,10 +133,10 @@ MonoBehaviour:
   prefabUnitHealthbar: {fileID: -6769539890857703570, guid: 0d43407d6f324e642a235e337b91dd8b, type: 3}
   HealthbarColor: {r: 0.9528302, g: 0.3755289, b: 0, a: 1}
   unitOutlineColorUser: {r: 0, g: 0.52795154, b: 0.7075472, a: 1}
-  unitOutlineColorOpponent: {r: 1, g: 0.2696729, b: 0, a: 1}
+  unitOutlineColorSecundary: {r: 1, g: 0.2705882, b: 0, a: 1}
   cameraUnitAttackLoop: {fileID: 7928335296724495698}
-  cameraUnitPortraitUser: {fileID: 8414993781205346811}
-  cameraUnitPortraitOpponent: {fileID: 874423002243906305}
+  cameraUnitPortraitPrimary: {fileID: 8414993781205346811}
+  cameraUnitPortraitSecondary: {fileID: 874423002243906305}
 --- !u!1001 &6557205077500902253
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -146,12 +146,20 @@ PrefabInstance:
     m_TransformParent: {fileID: 2201857206702249325}
     m_Modifications:
     - target: {fileID: 3330358068369789590, guid: b7acaaa187fc6c54f8a5f138465e461f, type: 3}
+      propertyPath: m_Name
+      value: CameraUnitPortraitPrimary
+      objectReference: {fileID: 0}
+    - target: {fileID: 3330358068369789590, guid: b7acaaa187fc6c54f8a5f138465e461f, type: 3}
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5795377246926184211, guid: b7acaaa187fc6c54f8a5f138465e461f, type: 3}
       propertyPath: m_Name
       value: Cameras
+      objectReference: {fileID: 0}
+    - target: {fileID: 6259242966615425132, guid: b7acaaa187fc6c54f8a5f138465e461f, type: 3}
+      propertyPath: m_Name
+      value: CameraUnitPortraitSecondary
       objectReference: {fileID: 0}
     - target: {fileID: 6259242966615425132, guid: b7acaaa187fc6c54f8a5f138465e461f, type: 3}
       propertyPath: m_Layer

@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 public partial class GameManager : MonoBehaviour
@@ -49,22 +51,27 @@ public partial class GameManager : MonoBehaviour
     public Color unitOutlineColorUser = Color.aliceBlue;
 
     [Tooltip("Outline material opponent.")]
-    public Color unitOutlineColorOpponent = Color.orangeRed;
+    public Color unitOutlineColorSecundary = Color.orangeRed;
 
     [Header("CAMERA")]
     [Tooltip("Es la camara que muestra el loop de ataque.")]
     public GameObject cameraUnitAttackLoop;
 
     [Tooltip("Es la camara que muestra el portraretrato de la unidad del usuario.")]
-    public GameObject cameraUnitPortraitUser;
+    public GameObject cameraUnitPortraitPrimary;
 
-    [Tooltip("Es la camara que muestra el portraretrato de la unidad del oponente.")]
-    public GameObject cameraUnitPortraitOpponent;
+    [Tooltip("Es la camara que muestra el portraretrato de la unidad secundaria.")]
+    public GameObject cameraUnitPortraitSecondary;
 
     /// <summary>
     /// Nuestra celda de unidad seleccionada.
     /// </summary>
     private int gnSelectedCellIndex = -1;
+
+    /// <summary>
+    /// Nos indica el estado de la acción de la unidad.
+    /// </summary>
+    private UnitActionState goUnitActionState = UnitActionState.SelectingUnit;
 
     /// <summary>
     /// Nos indica el modo de accion que se encuentra la unidad seleccionada.
@@ -136,7 +143,7 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Es la ultima unidad del tablero seleccionada del oponente.
     /// </summary>
-    private BoardUnit goSelectedBoardUnitOpponent = null;
+    private BoardUnit goSelectedBoardUnitSecondary = null;
 
     /// <summary>
     /// Es el clon de la unidad usada para el portaretrato.
@@ -146,7 +153,7 @@ public partial class GameManager : MonoBehaviour
     /// <summary>
     /// Es el clon de la unidad usada para el portaretrato.
     /// </summary>
-    private UnitInstance goUnitInstancePortraitOpponent = null;
+    private UnitInstance goUnitInstancePortraitSecondary = null;
 
     private static MaterialPropertyBlock goMPB;
 
@@ -179,11 +186,11 @@ public partial class GameManager : MonoBehaviour
     {
         switch (loCommand)
         {
-            case GameCommand.OnBoardMouseDown: OnBoardMouseDown(); break;
             case GameCommand.OnBoardMouseDrag: OnBoardMouseDrag(); break;
             case GameCommand.OnBoardMouseUp: OnBoardMouseUp(); break;
             case GameCommand.SetUnitActionMode: OnSetActionMode((UnitActionMode)loParams[0]); break;
             case GameCommand.CancelUnitAction: DeactivateCellsSelected(); break;
+            case GameCommand.ReturnActionState: OnReturnActionState(); break;
             default: break;
         }
     }
@@ -349,103 +356,15 @@ public partial class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Evento de OnClick en sobre el tablero para seleccionar u otras cosas.
-    /// Nota: Esta funcion se llama en los eventos del panel de UICombat atraves de llamadas del GameCommand.
+    /// Intentamos seleccionar una unidad de la celda seleccionada.
     /// </summary>
-    private void OnBoardMouseDown()
+    private bool TrySelectUnit(int lnCellIndex, out BoardUnit loSelectedBoardUnit)
     {
-        //<< Si nos indican que debemos deplazar la unidad seleccionada solo regresamos durante este proceso.
-        if (gnDeltaCellPath > -1) return;
-
-        //<< Recibimos el evento de ondown.
-        if (!Mouse.current.leftButton.wasPressedThisFrame) return;
-
-        Vector2 loMousePosition = Mouse.current.position.ReadValue();
-        gnMousePositionMagnitude = loMousePosition.magnitude;
-
-        //<< Desactivamos la celda vacia.
-        boardCellSelectedEmpty.gameObject.SetActive(false);
-
-        //<< Determinamos cual fue la celda seleccionada.
-        goRay = Camera.main.ScreenPointToRay(loMousePosition);
-        if (!Physics.Raycast(goRay, out goRaycastHit, Mathf.Infinity, Layer.BoardCellMask)) return;
-
-        //<< Seleccionamos la celda. Nota: Sabemos que el nombre del GameObject es el index de la celda.
-        int lnCellIndex = int.Parse(goRaycastHit.collider.gameObject.name);
-        SelectCell(lnCellIndex);
-    }
-
-    /// <summary>
-    /// Para cuando deseamos seleccionar una celda con base en su cellindex.
-    /// </summary>
-    private void SelectCell(int lnCellIndex)
-    {
-        //<< Desactivamos la celda vacia.
-        boardCellSelectedEmpty.gameObject.SetActive(false);
-
         //<< Obtenemos la celda seleccionada.
         BoardCell<BoardUnit> loBoardCell = goBoard.GetCell(lnCellIndex);
 
-        //<< Si está dentro del area de seleccion sabemos que quiere realizar la accion en dicha celda.
-        if (goUnitSurroundingCells.Any(x => x.Index == lnCellIndex))
-        {
-            //<< Revisamos si es alguna de las celdas que rodean la unidad para alguna acción.
-            switch (goUnitActionMode)
-            {
-                case UnitActionMode.Move:
-                    //<< Revisamos si es una de las celdas circundantes, si es así obtenemos el path mas acercado.
-                    if (goUnitSurroundingCells.Contains(loBoardCell))
-                    {
-                        //<< Desactivamos las celdas previamente seleccionadas.
-                        DeactivateCellsSelected();
-
-                        //<< Obtenemos cuantas celdas puede desplazarse la unidad.
-                        int lnDistance = goSelectedBoardUnit.GetMovement() + 1;
-
-                        //<< Obtenemos los indices de las celdas seleccionadas.
-                        int lnCellIndexStart = gnSelectedCellIndex;
-                        int lnCellIndexEnd = goBoard.CellIndexOf(loBoardCell.X, loBoardCell.Z);
-
-                        //<< Si la unidad se teletransporta solo podemos mostrar dos celdas, la de la unidad y la elegida.
-                        if (goSelectedBoardUnit.UnitProperties.UnitBattleProperties.Teleports)
-                        {
-                            goUnitCellsSelected.Add(goBoard.GetCell(lnCellIndexStart));
-                            goUnitCellsSelected.Add(goBoard.GetCell(lnCellIndexEnd));
-                        }
-                        else
-                        {
-                            //<< Obtenemos el camino de celdas del inicio al fin.
-                            goBoard.GetClosestPath(lnCellIndexStart, lnCellIndexEnd, lnDistance, BoardCellPassThrough, goUnitCellsSelected);
-
-                            //<< Revertimos el path para que inicie desde la unidad.
-                            goUnitCellsSelected.Reverse();
-                        }
-
-                        //<< Obtenemos el hashcode de la celda que representa las celdas de desplazamiento.
-                        int lnHashCode = prefabBoardCellSelected.GetHashCode();
-
-                        //<< Instanciamos el rango de celdas por las que puede moverse la unidad.
-                        Transform loDisplacementCell;
-                        foreach (BoardCell<BoardUnit> loItem in goUnitCellsSelected)
-                        {
-                            loDisplacementCell = Spawn(lnHashCode, prefabBoardCellSelected);
-                            loDisplacementCell.position = new Vector3(loItem.X, 0.0f, loItem.Z);
-                        }
-
-                        //<< Avisamos que debemos confirmar la acción de ataque ya que tenemos objetivo.
-                        GameManager.Send(GameCommand.UICombat_DisplayConfirmation, true, UnitActionMode.Move);
-                    }
-                    break;
-                case UnitActionMode.Attack: OnUnitActionModeAttack(loBoardCell, goSelectedBoardUnit); break;
-                default: break;
-            }
-
-            //<< Regresamos por que no estamos seleccionando unidad.
-            return;
-        }
-
         //<< Obtenemos la unidad de la celda seleccionada.
-        BoardUnit loSelectedBoardUnit = loBoardCell.Data.FirstOrDefault(x => x.UnitProperties.UnitBattleProperties.UnitType == UnitType.Unit);
+        loSelectedBoardUnit = loBoardCell.Data.FirstOrDefault(x => x.UnitProperties.UnitBattleProperties.UnitType == UnitType.Unit);
 
         //<< Si en la celda no hay unidad seleccionable posicionamos el elemento de celda vacia y regresamos.
         if (loSelectedBoardUnit == null)
@@ -453,107 +372,16 @@ public partial class GameManager : MonoBehaviour
             //<< Mostramos la celda vacia.
             boardCellSelectedEmpty.gameObject.SetActive(true);
             boardCellSelectedEmpty.transform.position = new Vector3(loBoardCell.X, 0.0f, loBoardCell.Z);
-            return;
+            return false;
         }
 
         //<< Si es la celda de nuestra unidad ya seleccionada regresamos.
-        if (loSelectedBoardUnit != null && (loSelectedBoardUnit == goSelectedBoardUnit || loSelectedBoardUnit == goSelectedBoardUnitOpponent)) return;
+        if (loSelectedBoardUnit != null && (loSelectedBoardUnit == goSelectedBoardUnit || loSelectedBoardUnit == goSelectedBoardUnitSecondary)) return false;
 
-        //<< Avisamos de nueva selección.
-        if (loSelectedBoardUnit.UserId == gnUserId)
-        {
-            gnSelectedCellIndex = lnCellIndex;
-            goSelectedBoardUnit = loSelectedBoardUnit;
-            Send(GameCommand.SetSelectedUnit, gnUserId, loSelectedBoardUnit, unitOutlineColorUser);
+        //<< Si no hay acciones no aparecen las celdas.
+        if (goBoard.GetActionsCount(gnUserId) <= 0) return false;
 
-            //<< Creamos la unidad del portaretrato.
-            if (goUnitInstancePortraitUser == null || goUnitInstancePortraitUser.UnitProperties.Id != loSelectedBoardUnit.UnitProperties.Id) CreatePortraitUnit(loSelectedBoardUnit.UnitProperties, goBoard.UserIdA == gnUserId ? goBoard.FactionUserA : goBoard.FactionUserB, cameraUnitPortraitUser, ref goUnitInstancePortraitUser, Layer.UnitPortraitUser);
-
-            //<< Si es nuestro turno mostramos la interfaz de acciones de unidad.
-            if (goBoard.Turn == gnUserId)
-            {
-                //<< Le avisamos al UI de combate que muestre las acciones.
-                Send(GameCommand.UICombat_DisplayActions, true);
-
-                //<< Le indicamos que botones debe habilitar o no al UI de combate.
-                Send(GameCommand.UICombat_EnableActionAttack, goSelectedBoardUnit.Attacks > 0);
-                Send(GameCommand.UICombat_EnableActionMove, goSelectedBoardUnit.Moves > 0);
-
-                //<< TODO: Falta revisar como saber si tiene acción de curación.
-                //Send(GameCommand.UICombat_DisplayActionHeal, goSelectedBoardUnit.Attacks > 0);
-                //Send(GameCommand.UICombat_EnableActionHeal, goSelectedBoardUnit.Attacks > 0);
-            }
-        }
-        else
-        {
-            goSelectedBoardUnitOpponent = loSelectedBoardUnit;
-            Send(GameCommand.SetSelectedUnit, gnUserId, loSelectedBoardUnit, unitOutlineColorOpponent);
-
-            //<< Creamos la unidad del portaretrato.
-            if (goUnitInstancePortraitOpponent == null || goUnitInstancePortraitOpponent.UnitProperties.Id != loSelectedBoardUnit.UnitProperties.Id) CreatePortraitUnit(loSelectedBoardUnit.UnitProperties, goBoard.UserIdA == gnUserId ? goBoard.FactionUserA : goBoard.FactionUserB, cameraUnitPortraitOpponent, ref goUnitInstancePortraitOpponent, Layer.UnitPortraitOpponent);
-        }
-
-        //<< Si no hay turnos no aparecen las celdas.
-        if (goBoard.GetActionsCount(gnUserId) <= 0) return;
-
-        //<< Creamos las celdas con base en la acción a realizar.
-        CreateActionCells(lnCellIndex, loSelectedBoardUnit);
-    }
-
-    /// <summary>
-    /// Crea las celdas necesarias con base en la accion que deseamos realizar con la unidad.
-    /// </summary>
-    /// <param name="loUnitInstance"></param>
-    private void CreateActionCells(int lnCellIndex, BoardUnit loBoardUnit)
-    {
-        //<< Desactivamos cualquier celda de selección previa.
-        DeactivateBoardCellsSelections();
-
-        //<< Desactivamos cualquier celda de area de efecto previa.
-        DeactivateCellsEffectArea();
-
-        switch (goUnitActionMode)
-        {
-            case UnitActionMode.Move:
-                {
-                    //<< Revisamos si tiene movimientos disponibles.
-                    if (loBoardUnit.Moves == 0) return;
-
-                    //<< Obtenemos las celdas por las que puede moverse la unidad.
-                    goBoard.GetPaths(lnCellIndex, loBoardUnit.GetMovement() + 1, BoardCellPassThrough, goUnitSurroundingCells);
-
-                    //<< Creamos las celdas usando el rango de movimiento.
-                    CreateSurroundingCells(prefabBoardCellMove, Color.green);
-                }
-                break;
-            case UnitActionMode.Attack:
-                {
-                    //<< Revisamos si tiene ataques disponibles.
-                    if (loBoardUnit.Attacks == 0) return;
-
-                    int lnAttackRange = loBoardUnit.GetAttackRange() + 1;
-
-                    //<< Obtenemos las celdas a las que puede atacar la unidad.
-                    switch (loBoardUnit.UnitProperties.UnitBattleProperties.AttackAreaType)
-                    {
-                        case AttackAreaType.Cross: goBoard.GetAreaCross(lnCellIndex, lnAttackRange, goUnitSurroundingCells); break;
-                        case AttackAreaType.X: goBoard.GetAreaX(lnCellIndex, lnAttackRange, goUnitSurroundingCells); break;
-                        default: goBoard.GetAreaRadial(lnCellIndex, lnAttackRange, goUnitSurroundingCells); break;
-                    }
-
-                    //<< Como no podemos atacar nuestras propias unidades las removemos de la selección de ataque.
-                    int lnCount = goUnitSurroundingCells.Count;
-                    for (int i = lnCount - 1; i >= 0; i--)
-                    {
-                        if (goUnitSurroundingCells[i].Data.Any(x => x.UserId == gnUserId)) goUnitSurroundingCells.RemoveAt(i);
-                    }
-
-                    //<< Creamos las celdas usando el rango de ataque.
-                    CreateSurroundingCells(prefabBoardCellAttack, Color.red);
-                }
-                break;
-            default: break;
-        }
+        return true;
     }
 
     private void OnActionModeChanged()
@@ -658,6 +486,14 @@ public partial class GameManager : MonoBehaviour
             //<< Ya que es modo drag debemos ir agregando celdas a la lista de celdas del camino seleccionado.
             case UnitActionMode.Move:
                 {
+                    //<< Si es la misma celda donde está la unidad simplemente limpiamos y regresamos.
+                    if (gnSelectedCellIndex == lnCellIndex)
+                    {
+                        goUnitCellsSelected.Clear();
+                        DeactivateSpawns(prefabBoardCellSelected.GetHashCode());
+                        return;
+                    }
+
                     //<< Revisamos si la celda se encuentra dentro de las celdas aceptables.
                     loBoardCell = goUnitSurroundingCells.FirstOrDefault(x => x.Index == lnCellIndex);
 
@@ -675,41 +511,35 @@ public partial class GameManager : MonoBehaviour
                         {
                             //<< Si seguimos en la ultima celda regresamos.
                             if (lnIndexOfBoardCell == goUnitCellsSelected.Count - 1) return;
+
                             //<< Si no es la celda donde está la unidad liberamos las demás para regresar a la seleccionada.
-                            else
+                            lnIndexOfBoardCell++;
+                            int lnCount = goUnitCellsSelected.Count - lnIndexOfBoardCell;
+                            if (lnCount > 0) goUnitCellsSelected.RemoveRange(lnIndexOfBoardCell, lnCount);
+
+                            //<< Removemos las instancias de las celdas del camino seleccionado.
+                            DeactivateSpawns(prefabBoardCellSelected.GetHashCode());
+
+                            //<< Creamos nuevas instancias de camino seleccionado.
+                            Transform loCellSelectedIn;
+                            int lnHashCodeIn = prefabBoardCellSelected.GetHashCode();
+                            foreach (BoardCell<BoardUnit> loItem in goUnitCellsSelected)
                             {
-                                //<< Obtenemos el hashcode de la celda que representa las celdas de desplazamiento.
-                                int lnHashCodeIn = prefabBoardCellSelected.GetHashCode();
-                                Transform loCellSelectedIn;
-                                lnIndexOfBoardCell++;
-                                int lnCount = goUnitCellsSelected.Count - lnIndexOfBoardCell;
-                                if (lnCount > 0) goUnitCellsSelected.RemoveRange(lnIndexOfBoardCell, lnCount);
-
-                                //<< Removemos las instancias de las celdas del camino seleccionado.
-                                DeactivateSpawns(prefabBoardCellSelected.GetHashCode());
-
-                                //<< Creamos nuevas instancias de camino seleccionado.
-                                foreach (BoardCell<BoardUnit> loItem in goUnitCellsSelected)
-                                {
-                                    //<< Instanciamos la celda seleccionada.
-                                    loCellSelectedIn = Spawn(lnHashCodeIn, prefabBoardCellSelected);
-                                    loCellSelectedIn.position = new Vector3(loItem.X, 0.0f, loItem.Z);
-                                }
-
-                                return;
+                                //<< Instanciamos la celda seleccionada.
+                                loCellSelectedIn = Spawn(lnHashCodeIn, prefabBoardCellSelected);
+                                loCellSelectedIn.position = new Vector3(loItem.X, 0.0f, loItem.Z);
                             }
+
+                            return;
                         }
                     }
 
-                    //<< Si ya tenemos el maximo de celdas regresamos.
-                    if (goSelectedBoardUnit.GetMovement() < goUnitCellsSelected.Count) return;
-
-                    //<< En caso de tener la lista vacia solo aceptamos que la celda seleccionada sea la que contiene la unidad.
-                    if (goUnitCellsSelected.Count == 0)
+                    //<< Revisamos si la celda no es vecina de la ultima celda seleccionada, de ser así creamos nuevo path.
+                    if (goSelectedBoardUnit.GetMovement() < goUnitCellsSelected.Count || (goUnitCellsSelected.Count == 0 && !goBoard.GetCell(gnSelectedCellIndex).IsNeighbor(loBoardCell)) || (goUnitCellsSelected.Count > 0 && !goUnitCellsSelected[goUnitCellsSelected.Count - 1].IsNeighbor(loBoardCell)))
                     {
-                        if (goUnitSurroundingCells[0] != loBoardCell) return;
+                        OnSelectMoveCells(lnCellIndex);
+                        return;
                     }
-                    else if (!goUnitCellsSelected[goUnitCellsSelected.Count - 1].IsNeighbor(loBoardCell)) return;//<< Revisamos si es vecino de la ultima celda seleccionada.
 
                     //<< Agregamos la celda seleccionada ya que cumple con los requisitos.
                     goUnitCellsSelected.Add(loBoardCell);
@@ -722,10 +552,6 @@ public partial class GameManager : MonoBehaviour
                     loCellSelected.position = new Vector3(loBoardCell.X, 0.0f, loBoardCell.Z);
                 }
                 break;
-            case UnitActionMode.Attack:
-                loBoardCell = goBoard.GetCell(lnCellIndex);
-                OnUnitActionModeAttack(loBoardCell, goSelectedBoardUnit);
-                break;
             default: break;
         }
     }
@@ -736,48 +562,172 @@ public partial class GameManager : MonoBehaviour
     /// </summary>
     private void OnBoardMouseUp()
     {
-        //<< Si nos indican que debemos deplazar la unidad seleccionada solo regresamos durante este proceso.
-        if (gnDeltaCellPath > -1) return;
+        //<< Revisamos si se liberó el boton izquierdo en este frame.
+        if (!Mouse.current.leftButton.wasReleasedThisFrame) return;
 
-        if (Mouse.current.leftButton.wasReleasedThisFrame) OnLeftMouseButtonUp();
-    }
+        //<< Si estamos en modo de confirmación regresamos por que no hay nada que hacer mas que confirmar.
+        if (goUnitActionState == UnitActionState.ConfirmingAction) return;
 
-    /// <summary>
-    /// Se llama cuando levantamos el boton izquierdo del mouse.
-    /// </summary>
-    private void OnLeftMouseButtonUp()
-    {
-        //<< Si no corresponde la unidad con el turno regresamos.
-        if (goSelectedBoardUnit == null || goSelectedBoardUnit.UserId != gnUserId) return;
+        //<< Obtenemos posicion del mouse.
+        Vector2 loMousePosition = Mouse.current.position.ReadValue();
+        gnMousePositionMagnitude = loMousePosition.magnitude;
 
-        switch (goUnitActionMode)
+        //<< Desactivamos la celda vacia.
+        boardCellSelectedEmpty.gameObject.SetActive(false);
+
+        //<< Determinamos cual fue la celda seleccionada.
+        goRay = Camera.main.ScreenPointToRay(loMousePosition);
+        if (!Physics.Raycast(goRay, out goRaycastHit, Mathf.Infinity, Layer.BoardCellMask)) return;
+
+        //<< Seleccionamos la celda. Nota: Sabemos que el nombre del GameObject es el index de la celda.
+        int lnCellIndex = int.Parse(goRaycastHit.collider.gameObject.name);
+
+        //<< Dependiendo del estado de acción...
+        switch (goUnitActionState)
         {
-            case UnitActionMode.Move:
-                //<< Si solo es una celda sabemos que es la misma celda en la que está la unidad por ello debemos detener el flujo.
-                if (goUnitCellsSelected.Count == 1) DeactivateCellsSelected();
-
-                //<< Avisamos que debemos habilitar o deshabilitar el botón de confirmación.
-                Send(GameCommand.UICombat_DisplayConfirmation, goUnitCellsSelected.Count > 1, goUnitActionMode);
-                break;
-            case UnitActionMode.Attack:
-                //<< Si es una unidad con rango cero sabemos que debemos agregar la misma celda en la que se encuentra y seleccionar el area.
-                if (goSelectedBoardUnit.GetAttackRange() == 0)
+            case UnitActionState.SelectingUnit:
+                if (TrySelectUnit(lnCellIndex, out BoardUnit loSelectedBoardUnit))
                 {
-                    OnUnitZeroRange(goSelectedBoardUnit);
+                    //<< Avisamos de nueva selección.
+                    if (loSelectedBoardUnit.UserId == gnUserId)
+                    {
+                        gnSelectedCellIndex = lnCellIndex;
+                        goSelectedBoardUnit = loSelectedBoardUnit;
+                        Send(GameCommand.SetSelectedUnit, gnUserId, loSelectedBoardUnit, unitOutlineColorUser);
+
+                        //<< Creamos la unidad del portaretrato.
+                        if (goUnitInstancePortraitUser == null || goUnitInstancePortraitUser.UnitProperties.Id != loSelectedBoardUnit.UnitProperties.Id) CreatePortraitUnit(loSelectedBoardUnit.UnitProperties, goBoard.UserIdA == gnUserId ? goBoard.FactionUserA : goBoard.FactionUserB, cameraUnitPortraitPrimary, ref goUnitInstancePortraitUser, Layer.UnitPortraitPrimary);
+
+                        //<< Si es nuestro turno mostramos la interfaz de acciones de unidad.
+                        if (goBoard.Turn == gnUserId)
+                        {
+                            //<< Le avisamos al UI de combate que muestre las acciones.
+                            Send(GameCommand.UICombat_DisplayActions, true);
+
+                            //<< Le indicamos que botones debe habilitar o no al UI de combate.
+                            Send(GameCommand.UICombat_EnableActionAttack, goSelectedBoardUnit.Attacks > 0);
+                            Send(GameCommand.UICombat_EnableActionMove, goSelectedBoardUnit.Moves > 0);
+
+                            //<< TODO: Falta revisar como saber si tiene acción de curación.
+                            //Send(GameCommand.UICombat_DisplayActionHeal, goSelectedBoardUnit.Attacks > 0);
+                            //Send(GameCommand.UICombat_EnableActionHeal, goSelectedBoardUnit.Attacks > 0);
+                        }
+                    }
+                    else
+                    {
+                        goSelectedBoardUnitSecondary = loSelectedBoardUnit;
+                        Send(GameCommand.SetSelectedUnit, gnUserId, loSelectedBoardUnit, unitOutlineColorSecundary);
+
+                        //<< Creamos la unidad del portaretrato.
+                        if (goUnitInstancePortraitSecondary == null || goUnitInstancePortraitSecondary.UnitProperties.Id != loSelectedBoardUnit.UnitProperties.Id) CreatePortraitUnit(loSelectedBoardUnit.UnitProperties, goBoard.UserIdA == gnUserId ? goBoard.FactionUserA : goBoard.FactionUserB, cameraUnitPortraitSecondary, ref goUnitInstancePortraitSecondary, Layer.UnitPortraitSecondary);
+                    }
                 }
-                //<< Si solo es una celda y es la misma celda en la que está la unidad debemos detener el flujo.
-                else if (goUnitCellsSelected.Count > 1) DeactivateCellsSelected();
-
-                //<< Revisamos si esta unidad puede atacar celdas vacias, de no ser así y que no haya unidades en la celda desactivamos la selección.
-                else if (!goSelectedBoardUnit.UnitProperties.UnitBattleProperties.AllowAttackEmptySpace && !goUnitCellsSelected.Any(x => x.Data.Count > 0 && x.Data.Any(x => x.UserId == gnUserId))) DeactivateCellsSelected();
-
-                //<< Avisamos que debemos habilitar o deshabilitar el botón de confirmación.
-                Send(GameCommand.UICombat_DisplayConfirmation, goUnitCellsSelected.Count == 1, goUnitActionMode);
                 break;
-            case UnitActionMode.Heal:
-                //<< TODO: Falta meter la logica de curación aqui.
+            case UnitActionState.SelectingCells:
+                //<< Si la celda no está dentro del area de seleccion solo regresamos.
+                if (!goUnitSurroundingCells.Any(x => x.Index == lnCellIndex)) return;
+
+                //<< Obtenemos la celda seleccionada.
+                BoardCell<BoardUnit> loBoardCellSelected = goBoard.GetCell(lnCellIndex);
+
+                //<< Desactivamos las celdas previamente seleccionadas.
+                DeactivateCellsSelected();
+
+                //<< Obtenemos el hashcode de la celda que representa la celda de selección.
+                int lnHashCode = prefabBoardCellSelected.GetHashCode();
+
+                //<< Revisamos si es alguna de las celdas que rodean la unidad para alguna acción.
+                switch (goUnitActionMode)
+                {
+                    case UnitActionMode.Move:
+                        OnSelectMoveCells(lnCellIndex);
+
+                        //<< Si solo es una celda sabemos que es la misma celda en la que está la unidad por ello debemos detener el flujo.
+                        if (goUnitCellsSelected.Count == 1)
+                        {
+                            DeactivateCellsSelected();
+                            goUnitCellsSelected.Clear();
+                        }
+
+                        //<< Avisamos que debemos habilitar o deshabilitar el botón de confirmación.
+                        Send(GameCommand.UICombat_DisplayConfirmation, goUnitCellsSelected.Count > 1, goUnitActionMode);
+                        break;
+                    case UnitActionMode.Attack:
+
+                        //<< Agregamos la celda seleccionada ya que cumple con los requisitos.
+                        goUnitCellsSelected.Add(loBoardCellSelected);
+
+                        //<< Instanciamos la celda seleccionada.
+                        Transform loCellSelected = Spawn(lnHashCode, prefabBoardCellSelected);
+                        loCellSelected.position = new Vector3(loBoardCellSelected.X, 0.0f, loBoardCellSelected.Z);
+
+                        //<< Mostramos el area de efecto.
+                        CreateEffectAreaOf(goSelectedBoardUnit, loBoardCellSelected, goSelectedBoardUnit.GameplayEffectsAttack);
+
+                        //<< Si es una unidad con rango cero sabemos que debemos agregar la misma celda en la que se encuentra y seleccionar el area.
+                        if (goSelectedBoardUnit.GetAttackRange() == 0) OnUnitZeroRange(goSelectedBoardUnit);
+                        //<< Si no hay celdas desactivamos todo.
+                        else if (goUnitCellsSelected.Count == 0) DeactivateCellsSelected();
+
+                        //<< Revisamos si dentro de la celda seleccionada de ataque hay una unidad para mostrarla en el portaretrato.
+                        if (goUnitCellsSelected.Count > 0)
+                        {
+                            BoardUnit loBoardUnitSelected = goUnitCellsSelected[goUnitCellsSelected.Count - 1].Data.FirstOrDefault(x => x.UnitProperties.UnitBattleProperties.UnitType.HasFlag(UnitType.Unit));
+                            if (loBoardUnitSelected != null)
+                            {
+                                goSelectedBoardUnitSecondary = loBoardUnitSelected;
+
+                                Send(GameCommand.SetSelectedUnit, gnUserId, goSelectedBoardUnitSecondary, unitOutlineColorSecundary);
+
+                                //<< Creamos la unidad del portaretrato.
+                                if (goUnitInstancePortraitSecondary == null || goUnitInstancePortraitSecondary.UnitProperties.Id != goSelectedBoardUnitSecondary.UnitProperties.Id) CreatePortraitUnit(goSelectedBoardUnitSecondary.UnitProperties, goBoard.UserIdA == gnUserId ? goBoard.FactionUserA : goBoard.FactionUserB, cameraUnitPortraitSecondary, ref goUnitInstancePortraitSecondary, Layer.UnitPortraitSecondary);
+                            }
+                            else GameManager.Send(GameCommand.UICombat_DisplayPortraitSecondary, false);
+                        }
+
+                        //<< Avisamos que debemos habilitar o deshabilitar el botón de confirmación.
+                        GameManager.Send(GameCommand.UICombat_DisplayConfirmation, goUnitCellsSelected.Count > 0, goUnitActionMode);
+                        break;
+                    default: break;
+                }
                 break;
             default: break;
+        }
+    }
+
+    private void OnSelectMoveCells(int lnCellIndexEnd)
+    {
+        //<< Obtenemos cuantas celdas puede desplazarse la unidad.
+        int lnDistance = goSelectedBoardUnit.GetMovement() + 1;
+
+        //<< Obtenemos los indices de las celdas seleccionadas.
+        int lnCellIndexStart = gnSelectedCellIndex;
+
+        //<< Si la unidad se teletransporta solo podemos mostrar dos celdas, la de la unidad y la elegida.
+        if (goSelectedBoardUnit.UnitProperties.UnitBattleProperties.Teleports)
+        {
+            goUnitCellsSelected.Add(goBoard.GetCell(lnCellIndexStart));
+            goUnitCellsSelected.Add(goBoard.GetCell(lnCellIndexEnd));
+        }
+        else
+        {
+            //<< Obtenemos el camino de celdas del inicio al fin.
+            goBoard.GetClosestPath(lnCellIndexStart, lnCellIndexEnd, lnDistance, BoardCellPassThrough, goUnitCellsSelected);
+
+            //<< Removemos la ultima celda que es la de la unidad para que no esté seleccionada.
+            if (goUnitCellsSelected.Count > 0) goUnitCellsSelected.RemoveAt(goUnitCellsSelected.Count - 1);
+
+            //<< Revertimos el path para que inicie desde la unidad.
+            goUnitCellsSelected.Reverse();
+        }
+
+        //<< Instanciamos el rango de celdas por las que puede moverse la unidad.
+        Transform loDisplacementCell;
+        int lnHashCode = prefabBoardCellSelected.GetHashCode();
+        foreach (BoardCell<BoardUnit> loItem in goUnitCellsSelected)
+        {
+            loDisplacementCell = Spawn(lnHashCode, prefabBoardCellSelected);
+            loDisplacementCell.position = new Vector3(loItem.X, 0.0f, loItem.Z);
         }
     }
 
@@ -789,8 +739,6 @@ public partial class GameManager : MonoBehaviour
         DeactivateCellsSelected();
         if (loBoardUnit.Attacks <= 0 || !goBoard.TryGetCell(loBoardUnit, out BoardCell<BoardUnit> loBoardCell)) return;
         goUnitSurroundingCells.Add(loBoardCell);
-        OnUnitActionModeAttack(loBoardCell, loBoardUnit);
-        goUnitSurroundingCells.Remove(loBoardCell);
     }
 
     /// <summary>
@@ -834,56 +782,25 @@ public partial class GameManager : MonoBehaviour
     /// <param name="lnCellZ"></param>
     /// <param name="loPrefabBoardCell"></param>
     /// <returns></returns>
-    private static void CreateSurroundingCells<T>(T loPrefabBoardCell, Color loColor) where T : Component
+    private static void CreateSurroundingCells<T>(T loPrefabBoardCell, Func<BoardCell<BoardUnit>, Color> loGetcolor) where T : Component
     {
         //<< Si no hay celdas solo regresamos.
-        if (goUnitSurroundingCells.Count <= 1)
-        {
-            goUnitSurroundingCells.Clear();
-            return;
-        }
+        if (goUnitSurroundingCells.Count <= 0) return;
 
         //<< Obtenemos el hashcode del prefab que representa las celdas.
         int lnHashCode = loPrefabBoardCell.GetHashCode();
 
         //<< Instanciamos el rango de celdas.
-        T loCell;
-        bool lbNew;
-        BoardCell<BoardUnit> loBoardCellPath;
+        T loPrefabCell;
+        BoardCell<BoardUnit> loBoardCell;
         int lnCount = goUnitSurroundingCells.Count;
         for (int i = 0; i < lnCount; i++)
         {
-            loBoardCellPath = goUnitSurroundingCells[i];
-            loCell = Spawn(lnHashCode, loPrefabBoardCell, out lbNew);
-            loCell.transform.position = new Vector3(loBoardCellPath.X, 0.0f, loBoardCellPath.Z);
-            if (!lbNew) continue;
-            SetBoardElementColor(loCell, loColor);
+            loBoardCell = goUnitSurroundingCells[i];
+            loPrefabCell = Spawn(lnHashCode, loPrefabBoardCell);
+            loPrefabCell.transform.position = new Vector3(loBoardCell.X, 0.0f, loBoardCell.Z);
+            SetBoardElementColor(loPrefabCell, loGetcolor(loBoardCell));
         }
-    }
-
-    private void OnUnitActionModeAttack(BoardCell<BoardUnit> loBoardCellTarget, BoardUnit loBoardUnit)
-    {
-        //<< Revisamos si es una de las celdas circundantes, de ser así la seleccionamos, de lo contrario regresamos.
-        if (!goUnitSurroundingCells.Contains(loBoardCellTarget)) return;
-
-        //<< Desactivamos las celdas previamente seleccionadas.
-        DeactivateCellsSelected();
-
-        //<< Agregamos la celda seleccionada ya que cumple con los requisitos.
-        goUnitCellsSelected.Add(loBoardCellTarget);
-
-        //<< Obtenemos el hashcode de la celda que representa las celdas de ataque.
-        int lnHashCode = prefabBoardCellSelected.GetHashCode();
-
-        //<< Instanciamos la celda seleccionada.
-        Transform loCellSelected = Spawn(lnHashCode, prefabBoardCellSelected);
-        loCellSelected.position = new Vector3(loBoardCellTarget.X, 0.0f, loBoardCellTarget.Z);
-
-        //<< Mostramos el area de efecto.
-        CreateEffectAreaOf(loBoardUnit, loBoardCellTarget, loBoardUnit.GameplayEffectsAttack);
-
-        //<< Avisamos que debemos confirmar la acción de ataque ya que tenemos objetivo.
-        GameManager.Send(GameCommand.UICombat_DisplayConfirmation, true, UnitActionMode.Attack);
     }
 
     /// <summary>
@@ -1241,13 +1158,141 @@ public partial class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Se llama cuando se establece el modo de acción.
+    /// Se llama cuando se establece el modo de acción de la unidad, por ende debemos seleccionar las celdas para la acción.
     /// </summary>
     /// <param name="loUnitActionMode"></param>
     private void OnSetActionMode(UnitActionMode loUnitActionMode)
     {
         goUnitActionMode = loUnitActionMode;
-        CreateActionCells(gnSelectedCellIndex, goSelectedBoardUnit);
+        goUnitActionState = UnitActionState.SelectingCells;
+
+        //<< Le avisamos al UI de combate que oculte las acciones ya que tenemos una seleccionada.
+        Send(GameCommand.UICombat_DisplayActions, false);
+
+        //<< Le avisamos al UI de combate que muestre el botón de regresar acción.
+        Send(GameCommand.UICombat_DisplayReturnState, true);
+
+        //<< Desactivamos cualquier celda de selección previa.
+        DeactivateBoardCellsSelections();
+
+        //<< Activamos las celdas de la acción.
+        switch (goUnitActionMode)
+        {
+            case UnitActionMode.Move:
+                {
+                    //<< Obtenemos las celdas por las que puede moverse la unidad.
+                    goBoard.GetPaths(gnSelectedCellIndex, goSelectedBoardUnit.GetMovement() + 1, BoardCellPassThrough, goUnitSurroundingCells);
+
+                    //<< Creamos las celdas usando el rango de movimiento.
+                    CreateSurroundingCells(prefabBoardCellMove, SurroundingCellsMoveValidation);
+
+                    //<< Revisamos que celdas son validas para el movimiento con base en la unidad seleccionada.
+                    int lnCount = goUnitSurroundingCells.Count;
+                    for (int i = lnCount - 1; i >= 0; i--)
+                    {
+                        if (!ValidateMoveCell(goUnitSurroundingCells[i])) goUnitSurroundingCells.RemoveAt(i);
+                    }
+                }
+                break;
+            case UnitActionMode.Attack:
+                {
+                    int lnAttackRange = goSelectedBoardUnit.GetAttackRange() + 1;
+
+                    //<< Obtenemos las celdas a las que puede atacar la unidad.
+                    switch (goSelectedBoardUnit.UnitProperties.UnitBattleProperties.AttackAreaType)
+                    {
+                        case AttackAreaType.Cross: goBoard.GetAreaCross(gnSelectedCellIndex, lnAttackRange, goUnitSurroundingCells); break;
+                        case AttackAreaType.X: goBoard.GetAreaX(gnSelectedCellIndex, lnAttackRange, goUnitSurroundingCells); break;
+                        default: goBoard.GetAreaRadial(gnSelectedCellIndex, lnAttackRange, goUnitSurroundingCells); break;
+                    }
+
+                    //<< Creamos las celdas usando el rango de ataque.
+                    CreateSurroundingCells(prefabBoardCellAttack, SurroundingCellsAttackValidation);
+
+                    //<< Revisamos que celdas son validas para el ataque con base en la unidad seleccionada.
+                    int lnCount = goUnitSurroundingCells.Count;
+                    for (int i = lnCount - 1; i >= 0; i--)
+                    {
+                        if (!ValidateAttackCell(goUnitSurroundingCells[i])) goUnitSurroundingCells.RemoveAt(i);
+                    }
+                }
+                break;
+            default: break;
+        }
+    }
+
+    /// <summary>
+    /// Valida si la celda es valida para atacar.
+    /// </summary>
+    /// <param name="loCell"></param>
+    /// <returns></returns>
+    private bool ValidateAttackCell(BoardCell<BoardUnit> loCell)
+    {
+        if (goSelectedBoardUnit.UnitProperties.UnitBattleProperties.AllowAttackEmptySpace) return true;
+
+        //<< Si no hay nadie en la celda...
+        if (loCell.Data.Count == 0 || loCell.Data.Any(x => x.UserId == gnUserId && x.UnitProperties.UnitBattleProperties.UnitType.HasFlag(UnitType.Unit))) return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Valida si la celda es valida para moverse en ella.
+    /// </summary>
+    /// <param name="loCell"></param>
+    /// <returns></returns>
+    private bool ValidateMoveCell(BoardCell<BoardUnit> loCell)
+    {
+        //<< Si no hay unidad en la celda...
+        return loCell.Data.Count == 0 || loCell.Data.Any(x => !x.UnitProperties.UnitBattleProperties.UnitType.HasFlag(UnitType.Unit));
+    }
+
+    /// <summary>
+    /// Valida si la celda es valida para atacar y regresa el color respectivo.
+    /// </summary>
+    /// <param name="loCell"></param>
+    /// <returns></returns>
+    private Color SurroundingCellsAttackValidation(BoardCell<BoardUnit> loCell)
+    {
+        return ValidateAttackCell(loCell) ? Color.red : Color.gray;
+    }
+
+    /// <summary>
+    /// Valida si la celda es valida para moverse en ella y regresa el color respectivo.
+    /// </summary>
+    /// <param name="loCell"></param>
+    /// <returns></returns>
+    private Color SurroundingCellsMoveValidation(BoardCell<BoardUnit> loCell)
+    {
+        return ValidateMoveCell(loCell) ? Color.green : Color.gray;
+    }
+
+    /// <summary>
+    /// Se llama cuando el UICombat nos indica que le dieron click al boton de regresar estado de acción.
+    /// </summary>
+    private void OnReturnActionState()
+    {
+        switch (goUnitActionState)
+        {
+            case UnitActionState.SelectingCells:
+                goUnitActionState = UnitActionState.SelectingUnit;
+                DeactivateBoardCellsSelections();
+
+                //<< Le indicamos que botones debe habilitar o no al UI de combate.
+                Send(GameCommand.UICombat_DisplayActions, true);
+                Send(GameCommand.UICombat_EnableActionAttack, goSelectedBoardUnit.Attacks > 0);
+                Send(GameCommand.UICombat_EnableActionMove, goSelectedBoardUnit.Moves > 0);
+
+                //<< Le avisamos al UI de combate que oculte el botón de regresar acción.
+                Send(GameCommand.UICombat_DisplayReturnState, false);
+                break;
+            case UnitActionState.ConfirmingAction:
+                goUnitActionState = UnitActionState.SelectingCells;
+                DeactivateCellsSelected();
+                GameManager.Send(GameCommand.UICombat_DisplayConfirmation, false, goUnitActionMode);
+                break;
+            default: break;
+        }
     }
 }
 
@@ -1261,7 +1306,6 @@ public partial class GameManager : MonoBehaviour
 //<< Ya le diste curar y te arrepientes y quieres seleccionar una unidad circundante?
 
 
-//<< Toda el area pero en dos colores, solo donde sea unidad aparece de otro color.
 //<< Se quita el portraretrato al no seleccionar nada.
 //<< El secundario de curador.
 
@@ -1273,3 +1317,13 @@ public partial class GameManager : MonoBehaviour
 
 //<< Modo selección en tres pasos.
 //<< Celda unica seleccionada al terminar la selección.
+
+
+//<< Si una unidad que no tiene unidades dentro del rango y no puede atacar espacios vacios deberia aparecer el boton de ataque desactivado?
+//<< Al igual que para moverse?
+
+//<< Si aparecen las acciones siempre y cuando haya.
+//<< Aparece en gris cuando no hay celda de ataque o de movimiento.
+//<< Aparece el area completa y en un color las celdas disponibles para atacar o mover.
+
+//<< Unidades pueden seleccionar la celda de una misma unidad cuando estan en rango de ataque?.

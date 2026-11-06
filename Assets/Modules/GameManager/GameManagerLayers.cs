@@ -9,8 +9,8 @@ public partial class GameManager : MonoBehaviour
 
         public static int UnitAttackLoop = LayerMask.NameToLayer("UnitAttackLoop");
 
-        public static int UnitPortraitUser = LayerMask.NameToLayer("UnitPortraitUser");
-        public static int UnitPortraitOpponent = LayerMask.NameToLayer("UnitPortraitOpponent");
+        public static int UnitPortraitPrimary = LayerMask.NameToLayer("UnitPortraitPrimary");
+        public static int UnitPortraitSecondary = LayerMask.NameToLayer("UnitPortraitSecondary");
 
         /// <summary>
         /// Se usa para el raycast y que permita solo este layer.
