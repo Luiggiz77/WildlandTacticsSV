@@ -92,7 +92,17 @@ public class Board<T> where T : class
     /// <summary>
     /// Arreglo de celdas lineal.
     /// </summary>
-    public BoardCell<T>[] BoardCells;
+    private BoardCell<T>[] goBoardCells;
+
+    /// <summary>
+    /// Nota: Al quitarse o agregarse deben tambien tambien debe hacerse sobre estas listas.
+    /// </summary>
+    public List<BoardUnit> AllBoardUnits = new List<BoardUnit>();
+
+    /// <summary>
+    /// Lista de instrucciones que se le mandan al usuario.
+    /// </summary>
+    public List<UnitEventInstruction> Instructions = new List<UnitEventInstruction>();
 
     /// <summary>
     /// Arreglo de celdas que se usa para cuando se hacen peticiones de celdas.
@@ -113,7 +123,7 @@ public class Board<T> where T : class
         UnitMovesPerTurn = lnUnitMovesPerTurn;
         Lenght = lnLenght;
         Width = lnWidth;
-        BoardCells = CreateBoard(lnWidth, lnLenght);
+        goBoardCells = CreateBoard(lnWidth, lnLenght);
         CreateSelectedCells();
     }
 
@@ -146,7 +156,7 @@ public class Board<T> where T : class
     /// <param name="loCellData"></param>
     public BoardCell<T> GetCell(int lnCellIndex)
     {
-        return BoardCells[lnCellIndex];
+        return goBoardCells[lnCellIndex];
     }
 
     /// <summary>
@@ -156,7 +166,7 @@ public class Board<T> where T : class
     public bool TryGetCell(T loElement, out BoardCell<T> loBoardCell)
     {
         loBoardCell = null;
-        foreach (BoardCell<T> loItem in BoardCells)
+        foreach (BoardCell<T> loItem in goBoardCells)
         {
             if (!loItem.Data.Contains(loElement)) continue;
             loBoardCell = loItem;
@@ -171,7 +181,7 @@ public class Board<T> where T : class
     /// <param name="loCellData"></param>
     public BoardCell<T>[] GetCellAsArray(int lnCellIndex)
     {
-        goSelectedCells[0] = BoardCells[lnCellIndex];
+        goSelectedCells[0] = goBoardCells[lnCellIndex];
         return goSelectedCells;
     }
 
@@ -181,7 +191,7 @@ public class Board<T> where T : class
     /// <returns></returns>
     public BoardCell<T>[] GetCells()
     {
-        return BoardCells;
+        return goBoardCells;
     }
 
     /// <summary>
@@ -190,8 +200,8 @@ public class Board<T> where T : class
     /// <returns></returns>
     public BoardCell<T>[] GetAreaBoard(out int lnCells)
     {
-        lnCells = BoardCells.Length;
-        for (int i = 0; i < lnCells; i++) goSelectedCells[i] = BoardCells[i];
+        lnCells = goBoardCells.Length;
+        for (int i = 0; i < lnCells; i++) goSelectedCells[i] = goBoardCells[i];
         return goSelectedCells;
     }
 
@@ -207,7 +217,7 @@ public class Board<T> where T : class
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
         foreach (int lnCellIndex in loCellIndexes)
         {
-            goSelectedCells[lnCells] = BoardCells[lnCellIndex];
+            goSelectedCells[lnCells] = goBoardCells[lnCellIndex];
             lnCells++;
         }
 
@@ -231,7 +241,7 @@ public class Board<T> where T : class
     /// <param name="loCellData"></param>
     public List<T> GetCellData(int lnCellIndex)
     {
-        return BoardCells[lnCellIndex].Data;
+        return goBoardCells[lnCellIndex].Data;
     }
 
     /// <summary>
@@ -302,7 +312,7 @@ public class Board<T> where T : class
             for (int z = 0; z < Lenght; z++)
             {
                 lnIndex = CellIndexOf(x, z);
-                loBoardCell = BoardCells[lnIndex];
+                loBoardCell = goBoardCells[lnIndex];
                 loBoardCell.X = x;
                 loBoardCell.Z = z;
                 loBoardCell.Index = lnIndex;
@@ -313,20 +323,20 @@ public class Board<T> where T : class
         for (int x = 0; x < Width; x++)
         {
             //<< Conectamos Z+
-            for (int z = 0; z < Lenght - 1; z++) BoardCells[CellIndexOf(x, z)].ZPos = BoardCells[CellIndexOf(x, z + 1)];
+            for (int z = 0; z < Lenght - 1; z++) goBoardCells[CellIndexOf(x, z)].ZPos = goBoardCells[CellIndexOf(x, z + 1)];
 
             //<< Conectamos Z-
-            for (int z = Lenght - 1; z >= 1; z--) BoardCells[CellIndexOf(x, z)].ZNeg = BoardCells[CellIndexOf(x, z - 1)];
+            for (int z = Lenght - 1; z >= 1; z--) goBoardCells[CellIndexOf(x, z)].ZNeg = goBoardCells[CellIndexOf(x, z - 1)];
         }
 
         //<< Conectamos laterales.
         for (int z = 0; z < Lenght; z++)
         {
             //<< Conectamos X+
-            for (int x = 0; x < Width - 1; x++) BoardCells[CellIndexOf(x, z)].XPos = BoardCells[CellIndexOf(x + 1, z)];
+            for (int x = 0; x < Width - 1; x++) goBoardCells[CellIndexOf(x, z)].XPos = goBoardCells[CellIndexOf(x + 1, z)];
 
             //<< Conectamos X-
-            for (int x = Width - 1; x >= 1; x--) BoardCells[CellIndexOf(x, z)].XNeg = BoardCells[CellIndexOf(x - 1, z)];
+            for (int x = Width - 1; x >= 1; x--) goBoardCells[CellIndexOf(x, z)].XNeg = goBoardCells[CellIndexOf(x - 1, z)];
         }
 
         //<< Conectamos todas las diagnonales.
@@ -334,7 +344,7 @@ public class Board<T> where T : class
         {
             for (int z = 0; z < Lenght; z++)
             {
-                loBoardCell = BoardCells[CellIndexOf(x, z)];
+                loBoardCell = goBoardCells[CellIndexOf(x, z)];
                 ConnectCross(loBoardCell);
                 ConnectDiagonal(loBoardCell);
             }
@@ -406,7 +416,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en el desplazamiento.
-        BoardCell<T>.GetPath(BoardCells[lnCellIndex], lnDistance, loPassThrough, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetPath(goBoardCells[lnCellIndex], lnDistance, loPassThrough, ref goSelectedCells, ref lnCells);
 
         //<< Mandamos las celdas seleccionadas.
         return goSelectedCells;
@@ -485,7 +495,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaRadial(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetAreaRadial(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
 
         //<< Mandamos las celdas seleccionadas.
         return goSelectedCells;
@@ -543,7 +553,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaCross(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetAreaCross(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -565,7 +575,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaCrossHollow(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetAreaCrossHollow(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -587,7 +597,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaX(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetAreaX(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -609,7 +619,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaXHollow(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetAreaXHollow(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -631,7 +641,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaChain(BoardCells[lnCellIndex], lnDistance, loChainedCell, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetAreaChain(goBoardCells[lnCellIndex], lnDistance, loChainedCell, ref goSelectedCells, ref lnCells);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -674,7 +684,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en el desplazamiento.
-        BoardCell<T>.GetClosestPath(BoardCells[lnCellIndexStart], BoardCells[lnCellIndexEnd], lnDistance, loPassThrough, ref goSelectedCells, ref lnCells);
+        BoardCell<T>.GetClosestPath(goBoardCells[lnCellIndexStart], goBoardCells[lnCellIndexEnd], lnDistance, loPassThrough, ref goSelectedCells, ref lnCells);
 
         //<< Mandamos las celdas seleccionadas.
         return goSelectedCells;
@@ -703,7 +713,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaLineal(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
+        BoardCell<T>.GetAreaLineal(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -725,7 +735,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaPerpendicularCentered(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
+        BoardCell<T>.GetAreaPerpendicularCentered(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -743,7 +753,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaTNormal(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
+        BoardCell<T>.GetAreaTNormal(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -761,7 +771,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaTInverted(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
+        BoardCell<T>.GetAreaTInverted(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -779,7 +789,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaTNormalHollow(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
+        BoardCell<T>.GetAreaTNormalHollow(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -797,7 +807,7 @@ public class Board<T> where T : class
         lnCells = 0;
 
         //<< Obtenemos la celda de inicio con base en las coordenadas dadas e indicamos a la celda que realize la busqueda del rango con base en la distancia.
-        BoardCell<T>.GetAreaTInvertedHollow(BoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
+        BoardCell<T>.GetAreaTInvertedHollow(goBoardCells[lnCellIndex], lnDistance, ref goSelectedCells, ref lnCells, loFacing);
 
         //<< Establecemos la distancia apartir del centro/inicio.
         EvaluateDistance(lnCells, lnDistance);
@@ -815,7 +825,7 @@ public class Board<T> where T : class
     public BoardCell<T>[] GetAreaSingle(int lnCellIndex, out int lnCells)
     {
         lnCells = 1;
-        goSelectedCells[0] = BoardCells[lnCellIndex];
+        goSelectedCells[0] = goBoardCells[lnCellIndex];
         goSelectedCells[0].Distance = 0;
         return goSelectedCells;
     }
@@ -985,7 +995,7 @@ public class Board<T> where T : class
     /// <returns></returns>
     public int GetRandomCellIndex()
     {
-        return UnityEngine.Random.Range(0, BoardCells.Length - 1);
+        return UnityEngine.Random.Range(0, goBoardCells.Length - 1);
     }
 
     /// <summary>
@@ -995,16 +1005,16 @@ public class Board<T> where T : class
     /// <returns></returns>
     public BoardCell<T>[] FurthestCell<T1, T2>(Func<BoardCell<T>, T1, T2, bool> loAllowed, T1 loT1, T2 loT2, int lnMaxDistance, int lnCellIndex, out int lnCells)
     {
-        int lnCount = BoardCells.Length - 1;
+        int lnCount = goBoardCells.Length - 1;
         int lnDistance;
         lnCells = 0;
         goSelectedCells[0] = null;
-        BoardCell<T> loCell = BoardCells[lnCellIndex];
+        BoardCell<T> loCell = goBoardCells[lnCellIndex];
         int lnX = loCell.X;
         int lnZ = loCell.Z;
         for (int i = 0; i < lnCount; i++)
         {
-            loCell = BoardCells[i];
+            loCell = goBoardCells[i];
             if (!loAllowed(loCell, loT1, loT2)) continue;
             lnDistance = Math.Abs(lnX - loCell.X) + Math.Abs(lnZ - loCell.Z);
             if (lnDistance < lnMaxDistance) continue;
@@ -1029,16 +1039,16 @@ public class Board<T> where T : class
     /// <returns></returns>
     public BoardCell<T>[] NearestCell<T1, T2>(Func<BoardCell<T>, T1, T2, bool> loAllowed, T1 loT1, T2 loT2, int lnMinDistance, int lnCellIndex, out int lnCells)
     {
-        int lnCount = BoardCells.Length - 1;
+        int lnCount = goBoardCells.Length - 1;
         int lnDistance;
         lnCells = 0;
         goSelectedCells[0] = null;
-        BoardCell<T> loCell = BoardCells[lnCellIndex];
+        BoardCell<T> loCell = goBoardCells[lnCellIndex];
         int lnX = loCell.X;
         int lnZ = loCell.Z;
         for (int i = 0; i < lnCount; i++)
         {
-            loCell = BoardCells[i];
+            loCell = goBoardCells[i];
             if (!loAllowed(loCell, loT1, loT2)) continue;
             lnDistance = Math.Abs(lnX - loCell.X) + Math.Abs(lnZ - loCell.Z);
             if (lnDistance > lnMinDistance) continue;

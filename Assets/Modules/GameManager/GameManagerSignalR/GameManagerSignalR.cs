@@ -5,6 +5,7 @@ using System.Collections;
 using System.Threading;
 using System.Collections.Concurrent;
 using System;
+using System.Linq;
 
 public partial class GameManager : MonoBehaviour
 {
@@ -59,6 +60,7 @@ public partial class GameManager : MonoBehaviour
             case GameCommand.CancelPairing: Run(CancelPairing(), nameof(CancelPairing)); break;
             case GameCommand.EndTurn: Run(EndTurn(), nameof(EndTurn)); break;
 
+            case GameCommand.ConfirmUnitAction: Run(OnConfirmUnitAction(), nameof(OnConfirmUnitAction)); break;
 
             default: break;
         }
@@ -373,8 +375,61 @@ public partial class GameManager : MonoBehaviour
                     }
                     break;
 
+                //<< Nos indican que nos estan mandando el tablero.
+                case SignalRCommand.PlayInstructions:
+                    {
+                        //<< Aqui debemos indicar que recibimos las instrucciones y que comenzamos reproduccion de las mismas.
+                        Send(SignalRCommand.InstructionsReceived);
+
+                        //<< En este punto recibimos el tablero actualizado. Nota: Primero reproducir las instrucciones y despues actualizar o revisar el tablero por desfases.
+                        SetBoardInstructions((Board<BoardUnit>)JsonUtility.FromJson(loMessage.Item2, typeof(Board<BoardUnit>)));
+                    }
+                    break;
+
                 default: break;
             }
         }
+    }
+
+    /// <summary>
+    /// Para confirmar la acción a realizar de la unidad.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator OnConfirmUnitAction()
+    {
+        //<< Primero validamos que sea factible la acción.
+        if (goUnitActionState != UnitActionState.ConfirmingAction) yield break;
+
+        //<< Revisamos que acción va a realizar, en este punto mandamos las celdas seleccionadas al servidor.
+        PlayerAction loPlayerAction = new PlayerAction();
+        switch (goUnitActionMode)
+        {
+            case UnitActionMode.Move: loPlayerAction.Action = PlayerAction.ActionType.Move; break;
+            case UnitActionMode.Attack: loPlayerAction.Action = PlayerAction.ActionType.Attack; break;
+            case UnitActionMode.Heal: loPlayerAction.Action = PlayerAction.ActionType.Heal; break;
+            default: yield break;
+        }
+        loPlayerAction.UnitPropertiesId = goSelectedBoardUnit.UnitProperties.Id;
+        loPlayerAction.CellIndexes.AddRange(goUnitCellsSelected.Select(x => x.Index));
+
+        //<< Avisamos a servidor que realice la siguiente acción de la unidad seleccionada.
+        //<< Mostramos pantalla de carga.
+
+
+        //<< Mostramos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.ShowUILoading, true);
+
+        //<< Si estamos conectados mandamos mensaje de que deseamos realizar la acción.
+        if (goHubConnection != null && goHubConnection.State == HubConnectionState.Connected)
+        {
+            Task loTaskUnitActionMessage = Task.Run(async () => await SendAsync(goHubConnection, SignalRCommand.SetPlayerAction, JsonUtility.ToJson(loPlayerAction)));
+            while (!loTaskUnitActionMessage.IsCompleted) yield return null;
+        }
+
+
+        //<< Debemos esperar a que el servidor termine de procesar la acción y nos regresa una actualización del tablero.
+
+        //<< Ocultamos pantalla de carga con fondo.
+        GameManager.Send(GameCommand.HideUILoading);
     }
 }

@@ -39,6 +39,26 @@ public class BoardUnit
     /// </summary>
     public Facing Facing;
 
+    /// <summary>
+    /// Indica la posicion en X de la unidad en el tablero.
+    /// </summary>
+    public int X = 0;
+
+    /// <summary>
+    /// Indica la posicion en Z de la unidad en el tablero.
+    /// </summary>
+    public int Z = 0;
+
+    /// <summary>
+    /// Indica la posicion en X del objetivo en el tablero.
+    /// </summary>
+    public int TargetX = 0;
+
+    /// <summary>
+    /// Indica la posicion en Z del objetivo en el tablero.
+    /// </summary>
+    public int TargetZ = 0;
+
     public UnitProperties UnitProperties;
 
     /// <summary>
@@ -50,6 +70,11 @@ public class BoardUnit
     /// Lista de efectos agregados a la unidad.
     /// </summary>
     public List<GameplayEffect> GameplayEffects = new List<GameplayEffect>();
+
+    /// <summary>
+    /// Instancia de nuestra unidad.
+    /// </summary>
+    public UnitInstance UnitInstance;
 
     /// <summary>
     /// Nos da el daño físico actual de la unidad actual contemplando efectos sobre ésta unidad.

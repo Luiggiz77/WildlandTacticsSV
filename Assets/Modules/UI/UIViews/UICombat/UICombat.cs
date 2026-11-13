@@ -357,4 +357,4 @@ public class UICombat : UIView
 //Que sucede cuando se intercambia el turno en las acciones? Se reinicia?
 //Siempre se bloquean las acciones cuando no hay acciones o ataques por realizar?
 //La curación se bloquea con base en la energia? Check de curación o efecto que da vida?
-//Si es cero se bloquea la curación, se bloquean klos dos botónes
+//Si es cero ataque se bloquea la curación y ataque.

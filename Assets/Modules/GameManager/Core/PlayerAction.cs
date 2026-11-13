@@ -16,9 +16,13 @@ public class PlayerAction
         /// </summary>
         Attack = 2,
         /// <summary>
+        /// Indica que curará con una unidad.
+        /// </summary>
+        Heal = 3,
+        /// <summary>
         /// Indica que usará un item.
         /// </summary>
-        Item = 3,
+        Item = 4,
     }
 
     /// <summary>

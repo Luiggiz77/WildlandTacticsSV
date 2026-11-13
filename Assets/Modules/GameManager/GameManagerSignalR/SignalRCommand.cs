@@ -42,7 +42,11 @@ public enum SignalRCommand : uint
     /// </summary>
     PlayInstructions = 10,
     /// <summary>
+    /// Es para avisarle al servidor que recibimos las instrucciones.
+    /// </summary>
+    InstructionsReceived = 11,
+    /// <summary>
     /// Indica que deseamos terminar nuestro turno.
     /// </summary>
-    EndTurn = 11,
+    EndTurn = 12,
 }

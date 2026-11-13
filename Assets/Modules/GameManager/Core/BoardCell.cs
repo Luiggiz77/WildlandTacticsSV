@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Se usa para los datos de la celda.
@@ -98,6 +99,8 @@ public class BoardCell<T> where T : class
     [NonSerialized]
     public BoardCell<T>[] Cross = new BoardCell<T>[4];
 
+    public Vector3 Vector;
+
     public BoardCell() { }
 
     /// <summary>
@@ -111,6 +114,7 @@ public class BoardCell<T> where T : class
         Index = lnIndex;
         X = lnX;
         Z = lnZ;
+        Vector = new Vector3(X, 0.0f, Z);
     }
 
     /// <summary>
